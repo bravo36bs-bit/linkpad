@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkPad - تسجيل الدخول</title>
+    <style>
+        :root {
+            --bg-color: #02414d;
+            --accent-color: #08f169;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--bg-color);
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border-color: var(--bg-color);
+            box-shadow: 0 0 8px rgba(2, 65, 77, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            filter: brightness(0.95);
+            transform: translateY(-2px);
+        }
+
+        #msg {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .err { background: #ffe3e6; color: #d32f2f; display: block !important; border: 1px solid #fbc2c4; }
+        .ok { background: #e8f5e9; color: #2e7d32; display: block !important; border: 1px solid #c8e6c9; }
+
+        .footer-links {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .footer-links a {
+            color: var(--bg-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>LinkPad Login</h2>
+        
+        <div id="msg"></div>
+
+        <div class="input-group">
+            <input id="u" type="text" placeholder="اسم المستخدم">
+        </div>
+
+        <div class="input-group">
+            <input id="p" type="password" placeholder="كلمة المرور">
+        </div>
+
+        <button type="button" onclick="login()">دخول</button>
+
+        <div class="footer-links">
+            ليس لديك حساب؟ <a href="register.html">سجل الآن</a>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const u = document.getElementById('u'),
+                  p = document.getElementById('p'),
+                  m = document.getElementById('msg');
+
+            m.style.display = 'none';
+            m.className = '';
+
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u.value.trim(), password: p.value })
+                });
+
+                const data = await res.json(); // استخراج البيانات هنا لضمان عملها في النجاح والفشل
+
+                if (res.ok) {
+                    m.className = 'ok';
+                    m.innerText = "أهلاً بك مجدداً! جاري الدخول...";
+                    localStorage.setItem('token', data.token);
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    m.className = 'err';
+                    m.innerText = data.error || "اسم المستخدم أو كلمة المرور غير صحيحة";
+                }
+            } catch (e) {
+                m.className = 'err';
+                m.innerText = "فشل الاتصال بالسيرفر";
+            }
+        }
+    </script>
+</body>
+</html>
