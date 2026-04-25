@@ -15,21 +15,22 @@ app.use(cors());
 app.use(express.static('public'));
 
 // --- الاتصال بقاعدة البيانات ---
-const db = mysql.createConnection(process.env.DATABASE_URL || {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME || 'linkpad_db',
-    port: process.env.DB_PORT || 3306,
+const db = mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 db.connect((err) => {
     if (err) {
-        console.error('Database Connection Failed:', err.message);
+        console.error("Database Connection Failed: " + err.message);
         return;
     }
-    console.log('LinkPad Engine: Connected to MySQL');
+    console.log("Connected to Aiven MySQL Successfully!");
 });
+
+
 
 // --- Middleware للتحقق من التوكن (لسهولة الكود) ---
 const authenticateToken = (req, res, next) => {
