@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.static('public'));
 
 // --- الاتصال بقاعدة البيانات ---
-const db = mysql.createConnection({
+const db = mysql.createConnection(process.env.DATABASE_URL || {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASS,
