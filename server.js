@@ -39,6 +39,17 @@ db.connect((err) => {
     }
     console.log("✅ Connected to Aiven MySQL Successfully!");
 });
+const createTableQuery = `
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);`;
+
+db.query(createTableQuery, (err) => {
+    if (err) console.error("Error creating table:", err);
+    else console.log("Users table is ready!");
+});
 
 
 // --- Middleware للتحقق من التوكن (لسهولة الكود) ---
