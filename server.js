@@ -15,21 +15,30 @@ app.use(cors());
 app.use(express.static('public'));
 
 // --- الاتصال بقاعدة البيانات ---
-const db = mysql.createConnection({
-    uri: process.env.DATABASE_URL,
+
+// تأكد أنك تستخدم mysql2 في أعلى الملف: const mysql = require('mysql2');
+
+const connectionUri = process.env.DATABASE_URL;
+
+const db = mysql.createConnection(connectionUri ? {
+    uri: connectionUri,
     ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false // هذا البديل البرمجي لـ ssl-mode=REQUIRED
     }
+} : {
+    host: 'localhost',
+    user: 'root',
+    password: 'your_password',
+    database: 'linkpad_db'
 });
 
 db.connect((err) => {
     if (err) {
-        console.error("Database Connection Failed: " + err.message);
+        console.error("❌ Database Connection Failed: " + err.message);
         return;
     }
-    console.log("Connected to Aiven MySQL Successfully!");
+    console.log("✅ Connected to Aiven MySQL Successfully!");
 });
-
 
 
 // --- Middleware للتحقق من التوكن (لسهولة الكود) ---
