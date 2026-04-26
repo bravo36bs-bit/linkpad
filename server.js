@@ -63,44 +63,47 @@ const createTables = () => {
     db.query(usersTable, () => {
         db.query(friendsTable, () => {
             db.query(messagesTable, () => {
-                console.log("🚀 All tables are ready (No Email column).");
+                console.log("🚀 LinkPad Engine Ready (No Email Required).");
             });
         });
     });
 };
 
 // --- Middleware ---
-const authenticateToken = (req, user_res, next) => {
+const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return req.res.status(401).json({ error: "Access Denied" });
+    if (!token) return res.status(401).json({ error: "Access Denied" });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return req.res.status(403).json({ error: "Invalid Token" });
+        if (err) return res.status(403).json({ error: "Invalid Token" });
         req.user = user;
         next();
     });
 };
 
-// --- المسارات ---
+// --- المسارات (Routes) ---
 
+// التسجيل (تم تعديله ليتناسب مع الواجهة بدون إيميل)
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: "بيانات ناقصة" });
+
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
-            if (err) return res.status(400).json({ error: "Username already exists" });
+            if (err) return res.status(400).json({ error: "اسم المستخدم موجود مسبقاً" });
             res.status(200).json({ message: "Success" });
         });
-    } catch { res.status(500).send("Error"); }
+    } catch { res.status(500).send("Internal Error"); }
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-        if (err || results.length === 0) return res.status(401).json({ error: "User not found" });
+        if (err || results.length === 0) return res.status(401).json({ error: "المستخدم غير موجود" });
         const isMatch = await bcrypt.compare(password, results[0].password);
-        if (!isMatch) return res.status(401).json({ error: "Wrong password" });
+        if (!isMatch) return res.status(401).json({ error: "كلمة المرور خاطئة" });
         const token = jwt.sign({ id: results[0].id, username: results[0].username }, JWT_SECRET);
         res.json({ token });
     });
@@ -109,9 +112,9 @@ app.post('/login', (req, res) => {
 app.get('/search-user', authenticateToken, (req, res) => {
     const query = req.query.query;
     db.query("SELECT id, username FROM users WHERE username = ? AND id != ?", [query, req.user.id], (err, results) => {
-        if (err) return res.status(500).json({ error: "DB Error" });
+        if (err) return res.status(500).json({ error: "خطأ في البحث" });
         if (results.length > 0) res.json(results[0]);
-        else res.status(404).json({ error: "Not found" });
+        else res.status(404).json({ error: "لم يتم العثور على المستخدم" });
     });
 });
 
@@ -133,96 +136,49 @@ app.get('/get-friends', authenticateToken, (req, res) => {
         res.json(rows || []);
     });
 });
-// مسار إرسال طلب صداقة
+
 app.post('/send-friend-request', authenticateToken, (req, res) => {
     const { friend_id } = req.body;
-    const user_id = req.user.id;
-
-    // التأكد من أن المستخدم لا يضيف نفسه
-    if (user_id == friend_id) return res.status(400).json({ error: "لا يمكنك إضافة نفسك" });
+    if (req.user.id == friend_id) return res.status(400).json({ error: "لا يمكنك إضافة نفسك" });
 
     const sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
-    db.query(sql, [user_id, friend_id], (err, result) => {
-        if (err) {
-            // إذا كان الطلب موجوداً مسبقاً (Unique Key)
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ error: "الطلب موجود بالفعل" });
-            }
-            console.error(err);
-            return res.status(500).json({ error: "خطأ في السيرفر" });
-        }
-        res.status(200).json({ message: "تم إرسال الطلب بنجاح" });
-    });
-});
-
-// مسار قبول طلب الصداقة (نحتاجه لكي يعمل زر القبول)
-app.post('/accept-friend', authenticateToken, (req, res) => {
-    const { request_id } = req.body;
-    const sql = "UPDATE friends SET status = 'accepted' WHERE id = ? AND friend_id = ?";
-    
-    db.query(sql, [request_id, req.user.id], (err, result) => {
-        if (err) return res.status(500).json({ error: "خطأ في القاعدة" });
-        res.status(200).json({ message: "تم قبول الصداقة" });
-    });
-});
-// جلب الرسائل بين المستخدم والصديق
-app.get('/get-messages/:friendId', authenticateToken, (req, res) => {
-    const userId = req.user.id;
-    const friendId = req.params.friendId;
-
-    const sql = `
-        SELECT * FROM private_messages 
-        WHERE (sender_id = ? AND receiver_id = ?) 
-        OR (sender_id = ? AND receiver_id = ?) 
-        ORDER BY created_at ASC`;
-
-    db.query(sql, [userId, friendId, friendId, userId], (err, results) => {
-        if (err) {
-            console.error("Error fetching messages:", err);
-            return res.status(500).json({ error: "خطأ في قاعدة البيانات" });
-        }
-        res.json(results);
-    });
-});
-
-// إرسال رسالة خاصة
-app.post('/send-private-message', authenticateToken, (req, res) => {
-    const { receiver_id, message } = req.body;
-    const sender_id = req.user.id;
-
-    if (!message || !receiver_id) return res.status(400).send("بيانات ناقصة");
-
-    const sql = "INSERT INTO private_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)";
-    db.query(sql, [sender_id, receiver_id, message], (err, result) => {
-        if (err) {
-            console.error("Error sending message:", err);
-            return res.status(500).json({ error: "فشل إرسال الرسالة" });
-        }
-        res.status(200).json({ message: "تم الإرسال بنجاح" });
-    });
-});
-
-// إرسال طلب صداقة (للتأكد من وجوده)
-app.post('/send-friend-request', authenticateToken, (req, res) => {
-    const { friend_id } = req.body;
-    const user_id = req.user.id;
-    if (user_id == friend_id) return res.status(400).json({ error: "لا يمكنك إضافة نفسك" });
-
-    const sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
-    db.query(sql, [user_id, friend_id], (err, result) => {
-        if (err) return res.status(400).json({ error: "الطلب موجود مسبقاً" });
+    db.query(sql, [req.user.id, friend_id], (err) => {
+        if (err) return res.status(400).json({ error: "الطلب موجود بالفعل أو حدث خطأ" });
         res.status(200).json({ message: "تم إرسال الطلب" });
     });
 });
 
-// قبول طلب الصداقة (للتأكد من وجوده)
 app.post('/accept-friend', authenticateToken, (req, res) => {
     const { request_id } = req.body;
     const sql = "UPDATE friends SET status = 'accepted' WHERE id = ? AND friend_id = ?";
-    db.query(sql, [request_id, req.user.id], (err, result) => {
-        if (err) return res.status(500).json({ error: "خطأ في السيرفر" });
+    db.query(sql, [request_id, req.user.id], (err) => {
+        if (err) return res.status(500).json({ error: "فشل القبول" });
         res.status(200).json({ message: "تم القبول" });
     });
 });
 
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+// جلب الرسائل (مهمة جداً لعرض الوقت في واتساب)
+app.get('/get-messages/:friendId', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const friendId = req.params.friendId;
+    const sql = `SELECT * FROM private_messages 
+                 WHERE (sender_id = ? AND receiver_id = ?) 
+                 OR (sender_id = ? AND receiver_id = ?) 
+                 ORDER BY created_at ASC`;
+    db.query(sql, [userId, friendId, friendId, userId], (err, results) => {
+        if (err) return res.status(500).json({ error: "خطأ في جلب الرسائل" });
+        res.json(results);
+    });
+});
+
+app.post('/send-private-message', authenticateToken, (req, res) => {
+    const { receiver_id, message } = req.body;
+    if (!message || !receiver_id) return res.status(400).send("بيانات ناقصة");
+    const sql = "INSERT INTO private_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)";
+    db.query(sql, [req.user.id, receiver_id, message], (err) => {
+        if (err) return res.status(500).json({ error: "فشل الإرسال" });
+        res.status(200).json({ message: "تم الإرسال" });
+    });
+});
+
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
