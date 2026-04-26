@@ -102,7 +102,8 @@ app.post('/register', (req, res) => {
 
 // تسجيل الدخول
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    const username = req.body.username.trim();
+const password = req.body.password.trim();
     const sql = "SELECT * FROM users WHERE username = ?";
     db.query(sql, [username], async (err, results) => {
         if (err || results.length === 0) return res.status(401).json({ error: "User not found" });
@@ -112,6 +113,8 @@ app.post('/login', (req, res) => {
         
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token });
+        console.log("Input Pass:", password);
+console.log("Stored Pass in DB:", user.password);
     });
 });
 
