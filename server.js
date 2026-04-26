@@ -165,5 +165,64 @@ app.post('/accept-friend', authenticateToken, (req, res) => {
         res.status(200).json({ message: "تم قبول الصداقة" });
     });
 });
+// جلب الرسائل بين المستخدم والصديق
+app.get('/get-messages/:friendId', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const friendId = req.params.friendId;
+
+    const sql = `
+        SELECT * FROM private_messages 
+        WHERE (sender_id = ? AND receiver_id = ?) 
+        OR (sender_id = ? AND receiver_id = ?) 
+        ORDER BY created_at ASC`;
+
+    db.query(sql, [userId, friendId, friendId, userId], (err, results) => {
+        if (err) {
+            console.error("Error fetching messages:", err);
+            return res.status(500).json({ error: "خطأ في قاعدة البيانات" });
+        }
+        res.json(results);
+    });
+});
+
+// إرسال رسالة خاصة
+app.post('/send-private-message', authenticateToken, (req, res) => {
+    const { receiver_id, message } = req.body;
+    const sender_id = req.user.id;
+
+    if (!message || !receiver_id) return res.status(400).send("بيانات ناقصة");
+
+    const sql = "INSERT INTO private_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)";
+    db.query(sql, [sender_id, receiver_id, message], (err, result) => {
+        if (err) {
+            console.error("Error sending message:", err);
+            return res.status(500).json({ error: "فشل إرسال الرسالة" });
+        }
+        res.status(200).json({ message: "تم الإرسال بنجاح" });
+    });
+});
+
+// إرسال طلب صداقة (للتأكد من وجوده)
+app.post('/send-friend-request', authenticateToken, (req, res) => {
+    const { friend_id } = req.body;
+    const user_id = req.user.id;
+    if (user_id == friend_id) return res.status(400).json({ error: "لا يمكنك إضافة نفسك" });
+
+    const sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
+    db.query(sql, [user_id, friend_id], (err, result) => {
+        if (err) return res.status(400).json({ error: "الطلب موجود مسبقاً" });
+        res.status(200).json({ message: "تم إرسال الطلب" });
+    });
+});
+
+// قبول طلب الصداقة (للتأكد من وجوده)
+app.post('/accept-friend', authenticateToken, (req, res) => {
+    const { request_id } = req.body;
+    const sql = "UPDATE friends SET status = 'accepted' WHERE id = ? AND friend_id = ?";
+    db.query(sql, [request_id, req.user.id], (err, result) => {
+        if (err) return res.status(500).json({ error: "خطأ في السيرفر" });
+        res.status(200).json({ message: "تم القبول" });
+    });
+});
 
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
