@@ -11,6 +11,7 @@ const JWT_SECRET = 'LinkPad_2026_Secure';
 const PORT = 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
 
@@ -76,18 +77,27 @@ app.get('/', (req, res) => {
 });
 
 // التسجيل
-app.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
-    if (!username || !password || !email) return res.status(400).json({ error: "جميع الحقول مطلوبة" });
+app.post('/register', (req, res) => {
+    // هذا السطر سيطبع لك في الـ Logs أي بيانات تصل للسيرفر
+    console.log("--- New Register Request ---");
+    console.log("Body received:", req.body); 
 
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-        db.query(sql, [username, hashedPassword, email], (err) => {
-            if (err) return res.status(400).json({ error: "المستخدم موجود مسبقاً" });
-            res.status(201).json({ message: "Success" });
-        });
-    } catch (e) { res.status(500).json({ error: "Server error" }); }
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        console.log("❌ Missing fields!");
+        return res.status(400).json({ error: "Username or password missing" });
+    }
+
+    const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
+    db.query(query, [username, password], (err, result) => {
+        if (err) {
+            console.log("❌ DB Error:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        console.log("✅ User registered successfully!");
+        res.status(200).json({ message: "Success" });
+    });
 });
 
 // تسجيل الدخول
