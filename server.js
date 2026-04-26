@@ -77,27 +77,33 @@ app.get('/', (req, res) => {
 });
 
 // التسجيل
-app.post('/register', (req, res) => {
-    // هذا السطر سيطبع لك في الـ Logs أي بيانات تصل للسيرفر
+// التسجيل المعدل مع التشفير
+app.post('/register', async (req, res) => {
     console.log("--- New Register Request ---");
-    console.log("Body received:", req.body); 
-
     const { username, password } = req.body;
 
     if (!username || !password) {
-        console.log("❌ Missing fields!");
         return res.status(400).json({ error: "Username or password missing" });
     }
 
-    const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
-    db.query(query, [username, password], (err, result) => {
-        if (err) {
-            console.log("❌ DB Error:", err.message);
-            return res.status(500).json({ error: err.message });
-        }
-        console.log("✅ User registered successfully!");
-        res.status(200).json({ message: "Success" });
-    });
+    try {
+        // 1. تشفير كلمة السر قبل الحفظ
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // 2. حفظ كلمة السر المشفرة في القاعدة
+        const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
+        db.query(query, [username, hashedPassword], (err, result) => {
+            if (err) {
+                console.log("❌ DB Error:", err.message);
+                return res.status(500).json({ error: err.message });
+            }
+            console.log("✅ User registered with hashed password!");
+            res.status(200).json({ message: "Success" });
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Server error during registration" });
+    }
 });
 
 // تسجيل الدخول
