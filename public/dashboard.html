@@ -377,16 +377,43 @@
         }
 
         async function loadRequests() {
-            const res = await fetch('/get-friend-requests', { headers: { 'Authorization': `Bearer ${token}` } });
-            const reqs = await res.json();
-            document.getElementById('notif-count').innerText = reqs.length;
-            document.getElementById('requests-list').innerHTML = reqs.length === 0 ? "لا توجد طلبات" : 
-                reqs.map(r => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:#f9f9f9; padding:8px; border-radius:8px;">
-                        <span style="font-weight:bold">${r.username}</span>
-                        <button onclick="acceptFriend(${r.id})" style="background:#2ecc71; color:white; border:none; border-radius:5px; padding:4px 8px; font-size:11px; cursor:pointer;">قبول</button>
-                    </div>`).join('');
+    try {
+        const response = await fetch('/get-friend-requests', {
+            headers: { 
+                'Authorization': 'Bearer ' + localStorage.getItem('token') 
+            }
+        });
+
+        // التأكد من نجاح الطلب قبل تحويله لـ JSON
+        if (!response.ok) {
+            console.error("Server returned an error");
+            return;
         }
+
+        const reqs = await response.json();
+
+        // السطر المنقذ: التأكد أن البيانات مصفوفة لكي لا يظهر خطأ .map
+        if (!Array.isArray(reqs)) {
+            console.error("Data is not an array:", reqs);
+            return;
+        }
+
+        const list = document.getElementById('requests-list');
+        if (reqs.length === 0) {
+            list.innerHTML = "<p>لا يوجد طلبات صداقة حالياً</p>";
+            return;
+        }
+
+        list.innerHTML = reqs.map(r => `
+            <div class="request-item">
+                <span>${r.username}</span>
+                <button onclick="acceptRequest(${r.id})">قبول</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error("Error loading requests:", error);
+    }
+}
 
         async function acceptFriend(requestId) {
             const res = await fetch('/accept-friend', {

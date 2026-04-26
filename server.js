@@ -148,13 +148,18 @@ app.post('/send-friend-request', authenticateToken, (req, res) => {
 });
 
 // جلب طلبات الصداقة الواردة
+// جلب طلبات الصداقة الواردة (المعدل)
 app.get('/get-friend-requests', authenticateToken, (req, res) => {
     const sql = `SELECT friends.id, users.username FROM friends 
                  JOIN users ON friends.user_id = users.id 
                  WHERE friends.friend_id = ? AND friends.status = 'pending'`;
     db.query(sql, [req.user.id], (err, results) => {
-        if (err) return res.status(500).send(err);
-        res.json(results);
+        if (err) {
+            console.error("❌ Error fetching requests:", err.message);
+            return res.status(500).json([]); // إرسال مصفوفة فارغة في حال حدوث خطأ
+        }
+        // إرسال النتائج، وإذا كانت فارغة نرسل مصفوفة فارغة []
+        res.json(results || []); 
     });
 });
 
