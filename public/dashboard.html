@@ -26,7 +26,6 @@
             overflow: hidden;
         }
 
-        /* --- Header --- */
         header {
             background: rgba(0, 0, 0, 0.3);
             padding: 10px 15px;
@@ -46,7 +45,6 @@
             position: relative;
         }
 
-        /* --- Sidebar --- */
         .sidebar {
             width: var(--sidebar-width);
             background: rgba(0, 0, 0, 0.15);
@@ -87,12 +85,11 @@
             font-weight: bold; font-size: 18px;
         }
 
-        /* --- Chat Area --- */
         .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* خلفية واتساب خفيفة */
+            background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay;
         }
 
@@ -114,7 +111,6 @@
             gap: 8px;
         }
 
-        /* --- Message Bubbles --- */
         .message {
             max-width: 85%;
             padding: 8px 12px;
@@ -134,11 +130,10 @@
         .received { 
             align-self: flex-end; 
             background: var(--received-msg); 
-            color: rgb(34, 128, 120); 
+            color: white; 
             border-top-left-radius: 2px;
         }
 
-        /* --- Input Area --- */
         .input-area {
             background: rgba(0, 0, 0, 0.3);
             padding: 10px 15px;
@@ -157,35 +152,27 @@
             font-size: 16px;
         }
 
-        /* --- Mobile Responsiveness (التحويل للموبايل) --- */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
                 position: absolute;
                 height: 100%;
                 z-index: 500;
+                right: 0;
             }
-
-            /* عندما نختار صديق، نخفي القائمة الجانبية */
-            .sidebar.hidden-mobile {
-                transform: translateX(100%);
-            }
-
-            .chat-area {
-                width: 100%;
-            }
-
+            .sidebar.hidden-mobile { transform: translateX(100%); }
             #back-btn { display: block !important; }
         }
 
         #back-btn { display: none; cursor: pointer; font-size: 20px; padding: 5px; }
         
-        /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 20% auto; width: 85%; max-width: 350px; border-radius: 20px; overflow: hidden; color: #333; }
         .search-box { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         .search-box input { padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        .search-box button { padding: 12px; border-radius: 10px; border: none; background: var(--bg-color); color: white; font-weight: bold; }
+        .search-box button { padding: 12px; border-radius: 10px; border: none; background: var(--bg-color); color: white; font-weight: bold; cursor: pointer; }
+        .request-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .request-item button { background: var(--accent-color); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -204,10 +191,10 @@
                 <span id="notif-count" class="badge" style="background: #ff4757; color: white; border-radius: 50%; padding: 2px 6px; position: absolute; top: -5px; right: -5px; font-size: 10px;">0</span>
                 <div id="notif-panel" style="display:none; position:absolute; top:35px; left:0; width:220px; background:white; color:#333; border-radius:12px; padding:15px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index: 3000;">
                     <h5 style="margin:0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">طلبات الصداقة</h5>
-                    <div id="requests-list" style="font-size:13px;">لا توجد طلبات</div>
+                    <div id="requests-list" style="font-size:13px;">جاري التحميل...</div>
                 </div>
             </div>
-            <button onclick="logout()" style="background:rgba(255, 77, 77, 0.2); color:#ff4d4d; border:1px solid #ff4d4d; padding:4px 12px; border-radius:12px; font-size:12px;">خروج</button>
+            <button onclick="logout()" style="background:rgba(255, 77, 77, 0.2); color:#ff4d4d; border:1px solid #ff4d4d; padding:4px 12px; border-radius:12px; font-size:12px; cursor: pointer;">خروج</button>
         </div>
     </header>
 
@@ -217,8 +204,7 @@
                 <h3 style="margin:0">المحادثات</h3>
                 <button onclick="openSearchModal()" style="background:var(--accent-color); color:#02414d; width:35px; height:35px; border:none; border-radius:50%; font-size:24px; cursor:pointer;">+</button>
             </div>
-            <div id="friends-list" class="friends-list">
-                </div>
+            <div id="friends-list" class="friends-list"></div>
         </aside>
 
         <main class="chat-area">
@@ -269,30 +255,31 @@
                 setInterval(() => {
                     if(activeFriendId) fetchMessages();
                     loadRequests();
-                }, 3000);
+                }, 4000);
             } catch (e) { logout(); }
         };
 
-        // دالة للعودة للقائمة في الموبايل
         function backToSidebar() {
             document.getElementById('sidebar').classList.remove('hidden-mobile');
             activeFriendId = null;
         }
 
         async function loadFriends() {
-            const res = await fetch('/get-friends', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const friends = await res.json();
-                document.getElementById('friends-list').innerHTML = friends.map(f => `
-                    <div class="friend-item ${activeFriendId === f.id ? 'active' : ''}" onclick="selectFriend(${f.id}, '${f.username}')">
-                        <div class="avatar-circle">${f.username[0].toUpperCase()}</div>
-                        <div style="flex:1">
-                            <div style="font-weight:bold">${f.username}</div>
-                            <div style="font-size:12px; opacity:0.6">انقر للمراسلة...</div>
+            try {
+                const res = await fetch('/get-friends', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const friends = await res.json();
+                    document.getElementById('friends-list').innerHTML = friends.map(f => `
+                        <div class="friend-item ${activeFriendId === f.id ? 'active' : ''}" onclick="selectFriend(${f.id}, '${f.username}')">
+                            <div class="avatar-circle">${f.username[0].toUpperCase()}</div>
+                            <div style="flex:1">
+                                <div style="font-weight:bold">${f.username}</div>
+                                <div style="font-size:12px; opacity:0.6">انقر للمراسلة...</div>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
-            }
+                    `).join('');
+                }
+            } catch (e) { console.error("Error loading friends"); }
         }
 
         function selectFriend(id, name) {
@@ -300,7 +287,6 @@
             document.getElementById('chat-header').innerHTML = `<b>${name}</b>`;
             document.getElementById('input-area').style.display = "flex";
             
-            // اخفاء القائمة في الموبايل عند اختيار صديق
             if (window.innerWidth <= 768) {
                 document.getElementById('sidebar').classList.add('hidden-mobile');
             }
@@ -311,64 +297,73 @@
 
         async function fetchMessages() {
             if (!activeFriendId) return;
-            const res = await fetch(`/get-messages/${activeFriendId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const messages = await res.json();
-                const container = document.getElementById('chat-container');
-                container.innerHTML = messages.map(msg => {
-                    const isMe = msg.sender_id === currentUser.id;
-                    return `
-                        <div class="message ${isMe ? 'sent' : 'received'}">
-                            ${msg.content}
-                            <div style="font-size:9px; opacity:0.6; margin-top:4px; text-align:left;">
-                                ${new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+            try {
+                const res = await fetch(`/get-messages/${activeFriendId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const messages = await res.json();
+                    const container = document.getElementById('chat-container');
+                    container.innerHTML = messages.map(msg => {
+                        const isMe = msg.sender_id === currentUser.id;
+                        return `
+                            <div class="message ${isMe ? 'sent' : 'received'}">
+                                ${msg.content}
+                                <div style="font-size:9px; opacity:0.6; margin-top:4px;">
+                                    ${new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
-                container.scrollTop = container.scrollHeight;
-            }
+                        `;
+                    }).join('');
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (e) { console.error("Error fetching messages"); }
         }
 
         async function sendMessage() {
             const input = document.getElementById('message-input');
             const val = input.value.trim();
             if (!val || !activeFriendId) return;
-            const res = await fetch('/send-private-message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ receiver_id: activeFriendId, message: val })
-            });
-            if (res.ok) { input.value = ""; fetchMessages(); }
+            try {
+                const res = await fetch('/send-private-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ receiver_id: activeFriendId, message: val })
+                });
+                if (res.ok) { input.value = ""; fetchMessages(); }
+            } catch (e) { console.error("Error sending message"); }
         }
 
         function handleKey(e) { if(e.key === "Enter") sendMessage(); }
 
-        // --- وظائف المودال والتنبيهات ---
         function openSearchModal() { document.getElementById('searchModal').style.display = "block"; }
-        function closeSearchModal() { document.getElementById('searchModal').style.display = "none"; }
+        function closeSearchModal() { document.getElementById('searchModal').style.display = "none"; document.getElementById('search-result').innerHTML = ""; }
 
         async function searchFriendModal() {
             const q = document.getElementById('search-input-modal').value.trim();
-            const res = await fetch(`/search-user?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
             const resultDiv = document.getElementById('search-result');
-            if (res.ok) {
-                const user = await res.json();
-                resultDiv.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:12px; border-radius:12px; margin-top:10px; border:1px solid #eee;">
-                        <span><b>${user.username}</b></span>
-                        <button onclick="sendFriendRequest(${user.id})" style="background:#2ecc71; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">إضافة</button>
-                    </div>`;
-            } else { resultDiv.innerHTML = "<p style='color:red; text-align:center;'>المستخدم غير موجود</p>"; }
+            if(!q) return;
+            try {
+                const res = await fetch(`/search-user?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const user = await res.json();
+                    resultDiv.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:12px; border-radius:12px; margin-top:10px; border:1px solid #eee;">
+                            <span><b>${user.username}</b></span>
+                            <button onclick="sendFriendRequest(${user.id})" style="background:#2ecc71; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">إضافة</button>
+                        </div>`;
+                } else { resultDiv.innerHTML = "<p style='color:red; text-align:center;'>المستخدم غير موجود</p>"; }
+            } catch (e) { resultDiv.innerHTML = "<p style='color:red;'>خطأ في السيرفر</p>"; }
         }
 
         async function sendFriendRequest(id) {
-            const res = await fetch('/send-friend-request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ friend_id: id })
-            });
-            if (res.ok) { alert("تم إرسال الطلب!"); closeSearchModal(); }
+            try {
+                const res = await fetch('/send-friend-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ friend_id: id })
+                });
+                if (res.ok) { alert("تم إرسال الطلب!"); closeSearchModal(); }
+                else { alert("الطلب موجود مسبقاً أو حدث خطأ"); }
+            } catch (e) { alert("خطأ في الاتصال"); }
         }
 
         function toggleNotifPanel() {
@@ -377,51 +372,35 @@
         }
 
         async function loadRequests() {
-    try {
-        const response = await fetch('/get-friend-requests', {
-            headers: { 
-                'Authorization': 'Bearer ' + localStorage.getItem('token') 
-            }
-        });
-
-        // التأكد من نجاح الطلب قبل تحويله لـ JSON
-        if (!response.ok) {
-            console.error("Server returned an error");
-            return;
+            try {
+                const res = await fetch('/get-friend-requests', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const reqs = await res.json();
+                    document.getElementById('notif-count').innerText = reqs.length;
+                    const list = document.getElementById('requests-list');
+                    if (reqs.length === 0) {
+                        list.innerHTML = "لا توجد طلبات";
+                        return;
+                    }
+                    list.innerHTML = reqs.map(r => `
+                        <div class="request-item">
+                            <span>${r.username}</span>
+                            <button onclick="acceptFriend(${r.id})">قبول</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error("Error loading requests"); }
         }
-
-        const reqs = await response.json();
-
-        // السطر المنقذ: التأكد أن البيانات مصفوفة لكي لا يظهر خطأ .map
-        if (!Array.isArray(reqs)) {
-            console.error("Data is not an array:", reqs);
-            return;
-        }
-
-        const list = document.getElementById('requests-list');
-        if (reqs.length === 0) {
-            list.innerHTML = "<p>لا يوجد طلبات صداقة حالياً</p>";
-            return;
-        }
-
-        list.innerHTML = reqs.map(r => `
-            <div class="request-item">
-                <span>${r.username}</span>
-                <button onclick="acceptRequest(${r.id})">قبول</button>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error("Error loading requests:", error);
-    }
-}
 
         async function acceptFriend(requestId) {
-            const res = await fetch('/accept-friend', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ request_id: requestId })
-            });
-            if (res.ok) { loadRequests(); loadFriends(); }
+            try {
+                const res = await fetch('/accept-friend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+                if (res.ok) { loadRequests(); loadFriends(); }
+            } catch (e) { console.error("Error accepting friend"); }
         }
 
         function logout() { localStorage.removeItem('token'); window.location.href = 'login.html'; }
