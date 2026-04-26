@@ -5,174 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LinkPad Chat - الداشبورد</title>
     <style>
-        :root {
-            --bg-color: #02414d;
-            --secondary-bg: rgba(255, 255, 255, 0.1);
-            --accent-color: #08f169;
-            --text-color: white;
-            --sidebar-width: 300px;
-            --received-msg: rgba(255, 255, 255, 0.15);
-            --sent-msg: #08f169;
-        }
+      
+    :root {
+        --bg-color: #02414d;
+        --accent-color: #08f169;
+        --sidebar-width: 100%; /* للموبايل تأخذ الشاشة كاملة */
+    }
 
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
+    body {
+        margin: 0; padding: 0;
+        height: 100vh; display: flex; flex-direction: column;
+        background: var(--bg-color); font-family: sans-serif;
+    }
 
-        header {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--secondary-bg);
-            height: 60px;
-            box-sizing: border-box;
-        }
+    /* الهيدر ثابت فوق دائماً */
+    header {
+        height: 60px; background: rgba(0,0,0,0.4);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 15px; z-index: 1000; flex-shrink: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
 
-        .main-wrapper {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
+    .main-wrapper {
+        flex: 1; display: flex; position: relative; overflow: hidden;
+    }
 
-        .sidebar {
-            width: var(--sidebar-width);
-            background: rgba(0, 0, 0, 0.15);
-            border-left: 1px solid var(--secondary-bg);
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
+    /* القائمة الجانبية: هي الواجهة الأساسية في الموبايل */
+    .sidebar {
+        width: 100%; height: 100%;
+        background: var(--bg-color);
+        position: absolute; left: 0; top: 0;
+        transition: transform 0.3s ease-in-out;
+        z-index: 500; /* تحت الهيدر وفوق الشات */
+        display: flex; flex-direction: column;
+    }
 
-        .sidebar-header {
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.1);
-        }
+    /* عندما نفتح محادثة، ندفع القائمة لليسار خارج الشاشة */
+    .sidebar.hidden-mobile {
+        transform: translateX(100%); /* دفع القائمة لليمين لإخفائها */
+    }
 
-        .friends-list { flex: 1; overflow-y: auto; }
+    /* منطقة المحادثة: تكون تحت القائمة دائماً */
+    .chat-area {
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        background: #012b33 url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+        background-blend-mode: overlay;
+    }
 
-        .friend-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+    /* زر الرجوع: يظهر فقط في الموبايل وعند وجود شات مفتوح */
+    #back-btn {
+        display: none; font-size: 24px; cursor: pointer; color: var(--accent-color);
+    }
 
-        .friend-item:hover { background: rgba(255, 255, 255, 0.05); }
-        .friend-item.active { background: var(--secondary-bg); border-right: 4px solid var(--accent-color); }
+    /* تحسين شكل الرسائل للموبايل */
+    #chat-container {
+        flex: 1; overflow-y: auto; padding: 15px;
+        display: flex; flex-direction: column; gap: 10px;
+    }
 
-        .avatar-circle {
-            width: 45px; height: 45px;
-            background: var(--accent-color);
-            color: #02414d;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 18px;
-        }
+    .message {
+        max-width: 80%; padding: 10px; border-radius: 12px; font-size: 14px;
+    }
+    .sent { align-self: flex-start; background: var(--accent-color); color: #000; }
+    .received { align-self: flex-end; background: rgba(255,255,255,0.1); color: #fff; }
 
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
-        }
+    /* منطقة الإدخال أسفل الشاشة */
+    .input-area {
+        padding: 10px; background: rgba(0,0,0,0.3);
+        display: flex; gap: 8px; align-items: center;
+    }
+    #message-input {
+        flex: 1; border-radius: 20px; border: none; padding: 10px 15px;
+        background: rgba(255,255,255,0.1); color: #fff;
+    }
 
-        .chat-header {
-            padding: 10px 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--secondary-bg);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    /* للشاشات الكبيرة (الكمبيوتر) */
+    @media (min-width: 769px) {
+        .sidebar { width: 350px; position: static; transform: none !important; }
+        .chat-area { flex: 1; }
+        #back-btn { display: none !important; }
+    }
 
-        #chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .message {
-            max-width: 85%;
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 15px;
-            position: relative;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .sent { 
-            align-self: flex-start; 
-            background: var(--sent-msg); 
-            color: #02414d; 
-            border-top-right-radius: 2px;
-        }
-
-        .received { 
-            align-self: flex-end; 
-            background: var(--received-msg); 
-            color: white; 
-            border-top-left-radius: 2px;
-        }
-
-        .input-area {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 15px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        #message-input {
-            flex: 1;
-            padding: 12px 18px;
-            border-radius: 25px;
-            border: none;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 16px;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-                z-index: 500;
-                right: 0;
-            }
-            .sidebar.hidden-mobile { transform: translateX(100%); }
-            #back-btn { display: block !important; }
-        }
-
-        #back-btn { display: none; cursor: pointer; font-size: 20px; padding: 5px; }
-        
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 20% auto; width: 85%; max-width: 350px; border-radius: 20px; overflow: hidden; color: #333; }
-        .search-box { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .search-box input { padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        .search-box button { padding: 12px; border-radius: 10px; border: none; background: var(--bg-color); color: white; font-weight: bold; cursor: pointer; }
-        .request-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .request-item button { background: var(--accent-color); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -294,6 +208,13 @@
             fetchMessages();
             loadFriends(); 
         }
+        function backToSidebar() {
+    // إرجاع القائمة الجانبية وإخفاء زر الرجوع
+    document.getElementById('sidebar').classList.remove('hidden-mobile');
+    document.getElementById('back-btn').style.display = "none";
+    document.getElementById('chat-header').innerText = "اختر صديقاً لبدء المراسلة";
+    activeFriendId = null;
+}
 
         async function fetchMessages() {
             if (!activeFriendId) return;
