@@ -20,7 +20,7 @@ app.use(express.static('public'));
 
 const connectionUri = process.env.DATABASE_URL;
 
-const mysql = require('mysql2');
+
 
 // إعداد الاتصال باستخدام المتغيرات المنفصلة
 const db = mysql.createConnection({
