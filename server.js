@@ -20,16 +20,18 @@ app.use(express.static('public'));
 
 const connectionUri = process.env.DATABASE_URL;
 
-const db = mysql.createConnection(connectionUri ? {
-    uri: connectionUri,
+const mysql = require('mysql2');
+
+// إعداد الاتصال باستخدام المتغيرات المنفصلة
+const db = mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || 'your_local_password', // كلمة سر جهازك للعمل المحلي
+    database: process.env.DB_NAME || 'linkpad_db',          // اسم قاعدتك المحلية
+    port: process.env.DB_PORT || 3306,
     ssl: {
-        rejectUnauthorized: false // هذا البديل البرمجي لـ ssl-mode=REQUIRED
+        rejectUnauthorized: false // هذا السطر هو مفتاح الأمان لـ Aiven
     }
-} : {
-    host: 'localhost',
-    user: 'root',
-    password: 'your_password',
-    database: 'linkpad_db'
 });
 
 db.connect((err) => {
@@ -37,18 +39,20 @@ db.connect((err) => {
         console.error("❌ Database Connection Failed: " + err.message);
         return;
     }
-    console.log("✅ Connected to Aiven MySQL Successfully!");
-});
-const createTableQuery = `
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL
-);`;
-
-db.query(createTableQuery, (err) => {
-    if (err) console.error("Error creating table:", err);
-    else console.log("Users table is ready!");
+    console.log("✅ Connected to Aiven MySQL Successfully (Separated)! ");
+    
+    // كود إنشاء الجدول لضمان وجوده
+    const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL
+    );`;
+    
+    db.query(createTableQuery, (err) => {
+        if (err) console.error("❌ Error creating table:", err.message);
+        else console.log("🚀 Tables are ready in Aiven!");
+    });
 });
 
 
