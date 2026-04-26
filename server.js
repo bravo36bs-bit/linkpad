@@ -41,20 +41,54 @@ db.connect((err) => {
         return;
     }
     console.log("✅ Connected to Aiven MySQL Successfully (Separated)! ");
-    
+});
     // كود إنشاء الجدول لضمان وجوده
-    const createTableQuery = `
+   // كود إنشاء الجداول لضمان وجودها جميعاً
+const createTables = () => {
+    const usersTable = `
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255) NOT NULL,
-        password VARCHAR(255) NOT NULL
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255)
     );`;
-    
-    db.query(createTableQuery, (err) => {
-        if (err) console.error("❌ Error creating table:", err.message);
-        else console.log("🚀 Tables are ready in Aiven!");
+
+    const friendsTable = `
+    CREATE TABLE IF NOT EXISTS friends (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        friend_id INT,
+        status ENUM('pending', 'accepted') DEFAULT 'pending',
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (friend_id) REFERENCES users(id),
+        UNIQUE KEY unique_friendship (user_id, friend_id)
+    );`;
+
+    const messagesTable = `
+    CREATE TABLE IF NOT EXISTS private_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT,
+        receiver_id INT,
+        content TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sender_id) REFERENCES users(id),
+        FOREIGN KEY (receiver_id) REFERENCES users(id)
+);`;
+
+    db.query(usersTable, (err) => {
+        if (err) console.error("❌ Error users table:", err.message);
+        db.query(friendsTable, (err) => {
+            if (err) console.error("❌ Error friends table:", err.message);
+            db.query(messagesTable, (err) => {
+                if (err) console.error("❌ Error messages table:", err.message);
+                else console.log("🚀 All tables are ready in Aiven!");
+            });
+        });
     });
-});
+};
+
+// استدعاء الدالة بعد الاتصال
+createTables();
 
 
 // --- Middleware للتحقق من التوكن (لسهولة الكود) ---
