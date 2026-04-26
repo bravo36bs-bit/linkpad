@@ -133,5 +133,37 @@ app.get('/get-friends', authenticateToken, (req, res) => {
         res.json(rows || []);
     });
 });
+// مسار إرسال طلب صداقة
+app.post('/send-friend-request', authenticateToken, (req, res) => {
+    const { friend_id } = req.body;
+    const user_id = req.user.id;
+
+    // التأكد من أن المستخدم لا يضيف نفسه
+    if (user_id == friend_id) return res.status(400).json({ error: "لا يمكنك إضافة نفسك" });
+
+    const sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
+    db.query(sql, [user_id, friend_id], (err, result) => {
+        if (err) {
+            // إذا كان الطلب موجوداً مسبقاً (Unique Key)
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ error: "الطلب موجود بالفعل" });
+            }
+            console.error(err);
+            return res.status(500).json({ error: "خطأ في السيرفر" });
+        }
+        res.status(200).json({ message: "تم إرسال الطلب بنجاح" });
+    });
+});
+
+// مسار قبول طلب الصداقة (نحتاجه لكي يعمل زر القبول)
+app.post('/accept-friend', authenticateToken, (req, res) => {
+    const { request_id } = req.body;
+    const sql = "UPDATE friends SET status = 'accepted' WHERE id = ? AND friend_id = ?";
+    
+    db.query(sql, [request_id, req.user.id], (err, result) => {
+        if (err) return res.status(500).json({ error: "خطأ في القاعدة" });
+        res.status(200).json({ message: "تم قبول الصداقة" });
+    });
+});
 
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
