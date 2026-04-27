@@ -223,13 +223,14 @@ app.post('/send-private-message', authenticateToken, (req, res) => {
 });
 
 // تشغيل السيرفر باستخدام الكائن server وليس app لدعم Socket.io
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`
     ---------------------------------------------------
     🚀 LinkPad Server is Live!
     🌐 Port: ${PORT}
     📡 Socket.io Ready
     ✅ Monitoring Database Connection...
+    🌍 Binding: 0.0.0.0 (Public Access Ready)
     ---------------------------------------------------
     `);
 });
