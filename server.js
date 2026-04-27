@@ -16,7 +16,7 @@ const io = new Server(server, {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'linkpad_super_secret_key';
 const PORT = process.env.PORT || 3000;
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
