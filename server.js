@@ -120,10 +120,21 @@ app.post('/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
-            if (err) return res.status(400).json({ error: "اسم المستخدم موجود مسبقاً" });
-            res.status(200).json({ message: "Success" });
-        });
+       db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
+    if (err) {
+        // هذا السطر راح يطبع لك الخطأ الحقيقي في الـ Logs بـ Render
+        console.error("Database Error:", err);
+
+        // إذا كان الخطأ فعلاً بسبب تكرار الاسم (كود الخطأ في MySQL هو ER_DUP_ENTRY)
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: "اسم المستخدم موجود مسبقاً" });
+        }
+
+        // إذا كان الخطأ شي ثاني (مثل فشل اتصال)
+        return res.status(500).json({ error: "فشل في الاتصال بالسيرفر، حاول لاحقاً" });
+    }
+    res.status(200).json({ message: "Success" });
+});
     } catch { res.status(500).send("Internal Error"); }
 });
 
