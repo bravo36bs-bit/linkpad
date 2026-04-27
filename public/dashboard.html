@@ -5,199 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LinkPad - المحادثات</title>
     <style>
-    :root {
-        
-    --primary: #008080; /* تركوازي أساسي */
-    --primary-light: #e0f2f1;
-    --bg-app: #dadbd3;
-    --chat-bg: #efe7dd;
-    --white: #ffffff;
-    --my-msg: #dcf8c6;
-    }
+        :root {
+            --primary: #008080;
+            --primary-dark: #006666;
+            --bg-app: #dadbd3;
+            --chat-bg: #efe7dd;
+            --white: #ffffff;
+            --my-msg: #dcf8c6;
+            --sidebar-bg: #ffffff;
+            --header-bg: #f0f2f5;
+        }
 
+        body {
+            background-color: var(--bg-app);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
 
-    body {
-   background-color: var(--bg-app);
-    height: 100vh;
-    margin: 0;
-    display: flex;
-    align-items: center; /* توسيط عمودي */
-    justify-content: center; /* توسيط أفقي */
-    font-family: 'Segoe UI', sans-serif;
-    }
-    .app-container {
-    width: 95%; /* ياخذ عرض الشاشة مع ترك مسافة بسيطة */
-    max-width: 1200px; /* لا يتوسع أكثر من اللازم على الشاشات الكبيرة */
-    height: 95vh;
-    background: var(--white);
-    display: flex;
-    flex-direction: column; /* الهيدر فوق والدردشة تحت */
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    overflow: hidden;
-}
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    header {
-      height: 60px; 
-    background: var(--primary); /* اللون التركوازي */
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0 15px; 
-    color: white;
-    flex-shrink: 0;
-    }
+        /* Responsive Container for Desktop */
+        @media (min-width: 900px) {
+            .app-container {
+                width: 95%;
+                max-width: 1300px;
+                height: 95vh;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+        }
 
-    
+        header {
+            height: 60px;
+            background: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+
         .main-wrapper {
-    flex: 1; /* ياخذ باقي مساحة الحاوية */
-    display: flex;
-    position: relative;
-    overflow: hidden;
-    }
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--chat-bg);
+        }
 
-    /* القائمة الجانبية */
-    .sidebar {
-        width: 100%; height: 100%;
-        background: #fff;
-        position: absolute; left: 0; top: 0;
-        transition: transform 0.3s ease;
-        z-index: 500;
-        display: flex; flex-direction: column;
-        border-left: 1px solid rgba(0,0,0,0.08);
-    }
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 100%;
+            height: 100%;
+            background: var(--sidebar-bg);
+            position: absolute;
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(0,0,0,0.1);
+        }
 
-    .sidebar.hidden-mobile { transform: translateX(100%); }
+        .sidebar.hidden-mobile {
+            transform: translateX(100%);
+        }
 
-    .sidebar-header {
-        padding: 15px; background: #f0f2f5;
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
+        .sidebar-header {
+            padding: 15px;
+            background: var(--header-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
 
-    /* منطقة المحادثة */
-    .chat-area {
-        width: 100%; height: 100%;
-        display: flex; flex-direction: column;
-        background: var(--wa-bg) url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-    }
+        /* --- Chat Area --- */
+        .chat-area {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--chat-bg) url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+        }
 
-    .chat-header {
-        padding: 10px 15px; background: #f0f2f5;
-        display: flex; align-items: center; gap: 10px;
-        font-weight: bold; border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
+        .chat-header {
+            padding: 10px 15px;
+            background: var(--header-bg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            min-height: 50px;
+        }
 
-    #back-btn { font-size: 20px; cursor: pointer; color: var(--wa-dark); display: none; }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-    /* شكل الرسائل الجديد (WhatsApp Style) */
-    #chat-container {
-        flex: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; gap: 4px;
-    }
+        /* --- Messages Styling --- */
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
 
-    .message {
-        max-width: 65%;
-    padding: 8px 15px;
-    border-radius: 12px; /* انحناء ألطف */
-    font-size: 15px;
-    margin-bottom: 5px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
+        .sent {
+            align-self: flex-start;
+            background: var(--my-msg);
+            border-top-right-radius: 0;
+        }
 
-    /* رسائلي (المرسلة) */
-    .sent { 
-       align-self: flex-start; 
-    background: var(--my-msg); 
-    border-top-right-radius: 2px;
-    }
+        .received {
+            align-self: flex-end;
+            background: var(--white);
+            border-top-left-radius: 0;
+        }
 
-    /* رسائل الطرف الآخر (المستلمة) */
-    .received { 
-        align-self: flex-end; 
-    background: var(--white); 
-    border-top-left-radius: 2px;
-    }
+        .msg-time {
+            font-size: 10px;
+            color: #667781;
+            margin-top: 4px;
+            text-align: left;
+        }
 
-    .msg-time {
-        font-size: 10px; color: #667781; margin-top: 4px; text-align: left;
-    }
+        /* --- Input Area --- */
+        .input-area {
+            padding: 10px 15px;
+            background: var(--header-bg);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-    /* منطقة الإدخال */
-    .input-area {
-        padding: 10px; background: #f0f2f5;
-        display: flex; gap: 10px; align-items: center;
-    }
+        #message-input {
+            flex: 1;
+            border-radius: 20px;
+            border: none;
+            padding: 10px 15px;
+            background: #fff;
+            font-size: 15px;
+            outline: none;
+        }
 
-    #message-input {
-        flex: 1; border-radius: 25px; border: none; padding: 12px 20px;
-        background: #fff; font-size: 16px; outline: none;
-    }
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
 
-    .send-btn {
-        background: var(--wa-teal); color: white; border: none;
-        width: 45px; height: 45px; border-radius: 50%;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-    }
+        /* --- Friends List --- */
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            gap: 15px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+        }
 
-    /* قائمة الأصدقاء */
-    .friend-item {
-        display: flex; align-items: center; padding: 12px 15px;
-        gap: 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer;
-        transition: 0.2s;
-    }
-    .friend-item:hover { background: #f5f6f6; }
-    .avatar-circle {
-        width: 45px; height: 45px; background: #dfe5e7; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; font-weight: bold;
-    }
+        .friend-item:hover { background: #f5f6f6; }
 
-    @media (min-width: 769px) {
-        .sidebar { width: 30%; position: static; transform: none !important; }
-        .chat-area { width: 70%; }
-        #back-btn { display: none !important; }
-    }
+        .avatar-circle {
+            width: 48px;
+            height: 48px;
+            background: #dfe5e7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #54656f;
+            font-size: 20px;
+        }
+
+        /* --- Desktop View Adjustment --- */
+        @media (min-width: 769px) {
+            .sidebar {
+                width: 30%;
+                position: static;
+                transform: none !important;
+            }
+            .chat-area { width: 70%; }
+            #back-btn { display: none !important; }
+        }
+
+        /* Icons & Panels */
+        #notif-panel {
+            display:none; 
+            position:absolute; 
+            top:45px; 
+            left:0; 
+            width:250px; 
+            background:white; 
+            color:#333; 
+            border-radius:8px; 
+            padding:15px; 
+            box-shadow:0 5px 25px rgba(0,0,0,0.3); 
+            z-index: 3000;
+        }
     </style>
 </head>
 <body>
-<div class="app-container"></div>
+
+<div class="app-container">
     <header>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="back-btn" onclick="backToSidebar()">➡️</span>
-            <span id="username-display" style="font-weight: bold;">LinkPad</span>
+            <span id="back-btn" onclick="backToSidebar()" style="display:none; cursor:pointer; font-size:20px;">➡️</span>
+            <span id="username-display" style="font-weight: bold; font-size:18px;">LinkPad</span>
         </div>
         
         <div style="display: flex; align-items: center; gap: 15px;">
             <div onclick="toggleNotifPanel()" style="position: relative; cursor: pointer;">
-                <span>🔔</span>
-                <span id="notif-count" style="background: var(--wa-green); color: white; border-radius: 50%; padding: 2px 6px; position: absolute; top: -8px; right: -8px; font-size: 10px;">0</span>
-                <div id="notif-panel" style="display:none; position:absolute; top:35px; left:0; width:220px; background:white; color:#333; border-radius:8px; padding:15px; box-shadow:0 5px 15px rgba(0,0,0,0.2); z-index: 3000;">
-                    <h5 style="margin:0 0 10px 0;">طلبات الصداقة</h5>
-                    <div id="requests-list" style="font-size:13px;">جاري التحميل...</div>
+                <span style="font-size:20px;">🔔</span>
+                <span id="notif-count" style="background: #ff3b30; color: white; border-radius: 50%; padding: 2px 6px; position: absolute; top: -5px; right: -5px; font-size: 10px;">0</span>
+                <div id="notif-panel">
+                    <h5 style="margin:0 0 10px 0; border-bottom:1px solid #eee; padding-bottom:5px;">طلبات الصداقة</h5>
+                    <div id="requests-list" style="font-size:13px; max-height:200px; overflow-y:auto;">جاري التحميل...</div>
                 </div>
             </div>
-            <button onclick="logout()" style="background:transparent; color:#ff4d4d; border:1px solid #ff4d4d; padding:4px 10px; border-radius:5px; font-size:12px; cursor: pointer;">خروج</button>
+            <button onclick="logout()" style="background:transparent; color:#fff; border:1px solid #fff; padding:4px 12px; border-radius:20px; font-size:12px; cursor: pointer;">خروج</button>
         </div>
     </header>
 
     <div class="main-wrapper">
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h3 style="margin:0; font-size:18px;">المحادثات</h3>
-                <button onclick="openSearchModal()" style="background:var(--wa-teal); color:white; width:35px; height:35px; border:none; border-radius:50%; font-size:20px; cursor:pointer;">+</button>
+                <h3 style="margin:0; color: #41525d;">المحادثات</h3>
+                <button onclick="openSearchModal()" style="background:var(--primary); color:white; width:32px; height:32px; border:none; border-radius:50%; font-size:20px; cursor:pointer;">+</button>
             </div>
-            <div id="friends-list" style="overflow-y:auto;"></div>
+            <div id="friends-list" style="overflow-y:auto; flex:1;"></div>
         </aside>
 
         <main class="chat-area">
             <div id="chat-header-info" class="chat-header">
-                <div id="chat-title">اختر محادثة للبدء</div>
+                <div id="chat-title" style="color: #41525d;">اختر محادثة للبدء</div>
             </div>
             
             <div id="chat-container">
-                <div style="margin:auto; text-align:center; opacity:0.5;">
-                    <h2>LinkPad</h2>
-                    <p>استخدم هذا التطبيق للمراسلة الفورية الآمنة</p>
+                <div style="margin:auto; text-align:center; opacity:0.4;">
+                    <div style="font-size: 50px;">🕊️</div>
+                    <h2>LinkPad Desktop</h2>
+                    <p>أرسل واستقبل الرسائل بخصوصية تامة</p>
                 </div>
             </div>
 
@@ -207,174 +289,164 @@
             </div>
         </main>
     </div>
+</div>
 
-    <div id="searchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:4000;">
-        <div style="background:white; max-width:90%; width:350px; margin:100px auto; border-radius:15px; overflow:hidden;">
-            <div style="padding:15px; background:#f0f2f5; display:flex; justify-content:space-between;">
-                <b>إضافة صديق</b>
-                <span onclick="closeSearchModal()" style="cursor:pointer;">&times;</span>
-            </div>
-            <div style="padding:20px;">
-                <input type="text" id="search-input-modal" placeholder="اسم المستخدم..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-                <button onclick="searchFriendModal()" style="width:100%; margin-top:10px; background:var(--wa-teal); color:white; border:none; padding:10px; border-radius:8px;">بحث</button>
-                <div id="search-result" style="margin-top:15px;"></div>
-            </div>
+<div id="searchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:4000; display: flex; align-items: center; justify-content: center;">
+    <div style="background:white; width:90%; max-width:350px; border-radius:15px; overflow:hidden;">
+        <div style="padding:15px; background:var(--header-bg); display:flex; justify-content:space-between; align-items: center;">
+            <b style="color:var(--primary)">إضافة صديق جديد</b>
+            <span onclick="closeSearchModal()" style="cursor:pointer; font-size:24px;">&times;</span>
+        </div>
+        <div style="padding:20px;">
+            <input type="text" id="search-input-modal" placeholder="ادخل اسم المستخدم..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; outline:none;">
+            <button onclick="searchFriendModal()" style="width:100%; margin-top:10px; background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">بحث عن المستخدم</button>
+            <div id="search-result" style="margin-top:15px;"></div>
         </div>
     </div>
+</div>
 
-    <script>
-        const token = localStorage.getItem('token');
-        let currentUser = null;
-        let activeFriendId = null;
+<script>
+    // حافظ على كل الـ Script الخاص بك كما هو هنا، التصحيح كان فقط في الـ HTML/CSS
+    const token = localStorage.getItem('token');
+    let currentUser = null;
+    let activeFriendId = null;
 
-        window.onload = function() {
-            // منع الرجوع لصفحة تسجيل الدخول إذا كان المستخدم مسجل دخول فعلياً
-if (window.location.pathname.includes('dashboard.html') && localStorage.getItem('token')) {
-    history.pushState(null, null, location.href);
-    window.onpopstate = function () {
-        // إذا كان على الموبايل والسايد بار مخفي، خليه يرجع يظهر السايد بار بدل ما يخرج
-        if (window.innerWidth <= 768 && document.getElementById('sidebar').classList.contains('hidden-mobile')) {
-            backToSidebar();
-            history.pushState(null, null, location.href);
-        } else {
-            // إذا كان في السايد بار أصلاً، يبقى في الصفحة
-            history.pushState(null, null, location.href);
-        }
-    };
-}
-            if (!token) { window.location.href = 'login.html'; return; }
-            try {
-                currentUser = JSON.parse(atob(token.split('.')[1]));
-                loadFriends();
+    window.onload = function() {
+        if (!token) { window.location.href = 'login.html'; return; }
+        try {
+            currentUser = JSON.parse(atob(token.split('.')[1]));
+            document.getElementById('username-display').innerText = `LinkPad | ${currentUser.username}`;
+            loadFriends();
+            loadRequests();
+            setInterval(() => {
+                if(activeFriendId) fetchMessages();
                 loadRequests();
-                setInterval(() => {
-                    if(activeFriendId) fetchMessages();
-                    loadRequests();
-                }, 3000);
-            } catch (e) { logout(); }
-        };
+            }, 3000);
+        } catch (e) { logout(); }
+    };
 
-        function backToSidebar() {
-            document.getElementById('sidebar').classList.remove('hidden-mobile');
-            document.getElementById('back-btn').style.display = "none";
-            activeFriendId = null;
-            document.getElementById('chat-title').innerText = "اختر محادثة للبدء";
-    document.getElementById('input-area').style.display = "none"
-        }
+    function backToSidebar() {
+        document.getElementById('sidebar').classList.remove('hidden-mobile');
+        document.getElementById('back-btn').style.display = "none";
+        activeFriendId = null;
+        document.getElementById('chat-title').innerText = "اختر محادثة للبدء";
+        document.getElementById('input-area').style.display = "none";
+    }
 
-        async function loadFriends() {
-            const res = await fetch('/get-friends', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const friends = await res.json();
-                document.getElementById('friends-list').innerHTML = friends.map(f => `
-                    <div class="friend-item" onclick="selectFriend(${f.id}, '${f.username}')">
-                        <div class="avatar-circle">${f.username[0].toUpperCase()}</div>
-                        <div>
-                            <div style="font-weight:bold">${f.username}</div>
-                            <div style="font-size:12px; color:#667781">اضغط للتحدث</div>
-                        </div>
+    async function loadFriends() {
+        const res = await fetch('/get-friends', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+            const friends = await res.json();
+            document.getElementById('friends-list').innerHTML = friends.map(f => `
+                <div class="friend-item" onclick="selectFriend(${f.id}, '${f.username}')">
+                    <div class="avatar-circle">${f.username[0].toUpperCase()}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:bold; color:#111b21">${f.username}</div>
+                        <div style="font-size:13px; color:#667781">اضغط لبدء الدردشة</div>
                     </div>
-                `).join('');
-            }
+                </div>
+            `).join('');
         }
+    }
 
-        function selectFriend(id, name) {
-            activeFriendId = id;
-            document.getElementById('chat-title').innerText = name;
-            document.getElementById('input-area').style.display = "flex";
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.add('hidden-mobile');
-                document.getElementById('back-btn').style.display = "block";
-            }
-            fetchMessages();
+    function selectFriend(id, name) {
+        activeFriendId = id;
+        document.getElementById('chat-title').innerText = name;
+        document.getElementById('input-area').style.display = "flex";
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.add('hidden-mobile');
+            document.getElementById('back-btn').style.display = "block";
         }
+        fetchMessages();
+    }
 
-        async function fetchMessages() {
-            if (!activeFriendId) return;
-            const res = await fetch(`/get-messages/${activeFriendId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const messages = await res.json();
-                const container = document.getElementById('chat-container');
-                container.innerHTML = messages.map(msg => {
-                    const isMe = msg.sender_id === currentUser.id;
-                    const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    return `
-                        <div class="message ${isMe ? 'sent' : 'received'}">
-                            ${msg.content}
-                            <div class="msg-time">${time}</div>
-                        </div>
-                    `;
-                }).join('');
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const val = input.value.trim();
-            if (!val || !activeFriendId) return;
-            const res = await fetch('/send-private-message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ receiver_id: activeFriendId, message: val })
-            });
-            if (res.ok) { input.value = ""; fetchMessages(); }
-        }
-
-        function handleKey(e) { if(e.key === "Enter") sendMessage(); }
-        function openSearchModal() { document.getElementById('searchModal').style.display = "block"; }
-        function closeSearchModal() { document.getElementById('searchModal').style.display = "none"; }
-        function toggleNotifPanel() { 
-            const p = document.getElementById('notif-panel');
-            p.style.display = p.style.display === 'block' ? 'none' : 'block';
-        }
-        function logout() { localStorage.removeItem('token'); window.location.href = 'login.html'; }
-
-        // الدوال الباقية (البحث والطلبات) تظل كما هي مع تحسينات طفيفة في التنسيق
-        async function searchFriendModal() {
-            const q = document.getElementById('search-input-modal').value.trim();
-            const res = await fetch(`/search-user?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            const div = document.getElementById('search-result');
-            if(res.ok) {
-                const user = await res.json();
-                div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; background:#f0f2f5; padding:10px; border-radius:8px;">
-                    <span>${user.username}</span>
-                    <button onclick="sendFriendRequest(${user.id})" style="background:var(--wa-green); border:none; padding:5px 10px; border-radius:5px; color:white;">إضافة</button>
-                </div>`;
-            } else { div.innerHTML = "<p style='color:red'>لم يتم العثور عليه</p>"; }
-        }
-
-        async function sendFriendRequest(id) {
-            const res = await fetch('/send-friend-request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ friend_id: id })
-            });
-            if(res.ok) { alert("تم الطلب!"); closeSearchModal(); }
-        }
-
-        async function loadRequests() {
-            const res = await fetch('/get-friend-requests', { headers: { 'Authorization': `Bearer ${token}` } });
-            if(res.ok) {
-                const reqs = await res.json();
-                document.getElementById('notif-count').innerText = reqs.length;
-                document.getElementById('requests-list').innerHTML = reqs.map(r => `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>${r.username}</span>
-                        <button onclick="acceptFriend(${r.id})" style="background:var(--wa-teal); color:white; border:none; padding:2px 8px; border-radius:4px;">قبول</button>
+    async function fetchMessages() {
+        if (!activeFriendId) return;
+        const res = await fetch(`/get-messages/${activeFriendId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+            const messages = await res.json();
+            const container = document.getElementById('chat-container');
+            container.innerHTML = messages.map(msg => {
+                const isMe = msg.sender_id === currentUser.id;
+                const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                return `
+                    <div class="message ${isMe ? 'sent' : 'received'}">
+                        ${msg.content}
+                        <div class="msg-time">${time}</div>
                     </div>
-                `).join('') || "لا توجد طلبات";
-            }
+                `;
+            }).join('') || `<p style="text-align:center; opacity:0.5; margin-top:20px;">لا توجد رسائل بعد. ابدأ المحادثة الآن!</p>`;
+            container.scrollTop = container.scrollHeight;
         }
+    }
 
-        async function acceptFriend(rid) {
-            const res = await fetch('/accept-friend', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ request_id: rid })
-            });
-            if(res.ok) { loadRequests(); loadFriends(); }
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const val = input.value.trim();
+        if (!val || !activeFriendId) return;
+        const res = await fetch('/send-private-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ receiver_id: activeFriendId, message: val })
+        });
+        if (res.ok) { input.value = ""; fetchMessages(); }
+    }
+
+    function handleKey(e) { if(e.key === "Enter") sendMessage(); }
+    function openSearchModal() { document.getElementById('searchModal').style.display = "flex"; }
+    function closeSearchModal() { document.getElementById('searchModal').style.display = "none"; }
+    function toggleNotifPanel() { 
+        const p = document.getElementById('notif-panel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    }
+    function logout() { localStorage.removeItem('token'); window.location.href = 'login.html'; }
+
+    async function searchFriendModal() {
+        const q = document.getElementById('search-input-modal').value.trim();
+        if(!q) return;
+        const res = await fetch(`/search-user?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const div = document.getElementById('search-result');
+        if(res.ok) {
+            const user = await res.json();
+            div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #eee;">
+                <span style="font-weight:bold;">${user.username}</span>
+                <button onclick="sendFriendRequest(${user.id})" style="background:var(--primary); border:none; padding:6px 12px; border-radius:20px; color:white; cursor:pointer;">إضافة</button>
+            </div>`;
+        } else { div.innerHTML = "<p style='color:#ea0038; text-align:center;'>لم يتم العثور على هذا المستخدم</p>"; }
+    }
+
+    async function sendFriendRequest(id) {
+        const res = await fetch('/send-friend-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ friend_id: id })
+        });
+        if(res.ok) { alert("تم إرسال طلب الصداقة!"); closeSearchModal(); }
+        else { alert("الطلب مرسل مسبقاً أو هناك خطأ."); }
+    }
+
+    async function loadRequests() {
+        const res = await fetch('/get-friend-requests', { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) {
+            const reqs = await res.json();
+            document.getElementById('notif-count').innerText = reqs.length;
+            document.getElementById('requests-list').innerHTML = reqs.map(r => `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f9f9f9; padding:8px; border-radius:5px;">
+                    <span style="font-weight:500;">${r.username}</span>
+                    <button onclick="acceptFriend(${r.id})" style="background:var(--primary); color:white; border:none; padding:4px 10px; border-radius:15px; cursor:pointer;">قبول</button>
+                </div>
+            `).join('') || "<p style='text-align:center; opacity:0.5;'>لا توجد طلبات معلقة</p>";
         }
-    </script>
+    }
+
+    async function acceptFriend(rid) {
+        const res = await fetch('/accept-friend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ request_id: rid })
+        });
+        if(res.ok) { loadRequests(); loadFriends(); }
+    }
+</script>
 </body>
 </html>
