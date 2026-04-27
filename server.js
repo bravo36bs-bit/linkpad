@@ -1,8 +1,9 @@
-require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mysql = require('mysql2');
+require('dotenv').config();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
@@ -50,13 +51,14 @@ const db = mysql.createConnection({
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    connectTimeout: 10000
 
 });
 
 db.connect((err) => {
     if (err) {
-        console.error("❌ Database Connection Failed: " + err.message);
+        console.error('❌ Database Connection Failed:', err.stack);
         return;
     }
     console.log("✅ Connected to Aiven MySQL!");
