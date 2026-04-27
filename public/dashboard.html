@@ -6,30 +6,54 @@
     <title>LinkPad - المحادثات</title>
     <style>
     :root {
-        --wa-dark: #075E54;
-        --wa-teal: #128C7E;
-        --wa-green: #25D366;
-        --wa-light-green: #dcf8c6;
-        --wa-bg: #e5ddd5;
-        --text-main: #111b21;
+        
+    --primary: #008080; /* تركوازي أساسي */
+    --primary-light: #e0f2f1;
+    --bg-app: #dadbd3;
+    --chat-bg: #efe7dd;
+    --white: #ffffff;
+    --my-msg: #dcf8c6;
     }
+
 
     body {
-        margin: 0; padding: 0;
-        height: 100vh; display: flex; flex-direction: column;
-        background: var(--wa-bg); font-family: 'Segoe UI', Tahoma, sans-serif;
-        color: var(--text-main);
+   background-color: var(--bg-app);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center; /* توسيط عمودي */
+    justify-content: center; /* توسيط أفقي */
+    font-family: 'Segoe UI', sans-serif;
     }
+    .app-container {
+    width: 95%; /* ياخذ عرض الشاشة مع ترك مسافة بسيطة */
+    max-width: 1200px; /* لا يتوسع أكثر من اللازم على الشاشات الكبيرة */
+    height: 95vh;
+    background: var(--white);
+    display: flex;
+    flex-direction: column; /* الهيدر فوق والدردشة تحت */
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
 
     header {
-        height: 60px; background: var(--wa-dark);
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 0 15px; z-index: 1000; flex-shrink: 0;
-        color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      height: 60px; 
+    background: var(--primary); /* اللون التركوازي */
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 0 15px; 
+    color: white;
+    flex-shrink: 0;
     }
 
-    .main-wrapper {
-        flex: 1; display: flex; position: relative; overflow: hidden;
+    
+        .main-wrapper {
+    flex: 1; /* ياخذ باقي مساحة الحاوية */
+    display: flex;
+    position: relative;
+    overflow: hidden;
     }
 
     /* القائمة الجانبية */
@@ -73,22 +97,26 @@
     }
 
     .message {
-        max-width: 75%; padding: 8px 12px; border-radius: 8px; 
-        font-size: 15px; position: relative; line-height: 1.4;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-        margin-bottom: 2px;
+        max-width: 65%;
+    padding: 8px 15px;
+    border-radius: 12px; /* انحناء ألطف */
+    font-size: 15px;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     /* رسائلي (المرسلة) */
     .sent { 
-        align-self: flex-start; background: var(--wa-light-green); 
-        border-top-right-radius: 0; margin-right: 10px;
+       align-self: flex-start; 
+    background: var(--my-msg); 
+    border-top-right-radius: 2px;
     }
 
     /* رسائل الطرف الآخر (المستلمة) */
     .received { 
-        align-self: flex-end; background: #fff; 
-        border-top-left-radius: 0; margin-left: 10px;
+        align-self: flex-end; 
+    background: var(--white); 
+    border-top-left-radius: 2px;
     }
 
     .msg-time {
@@ -132,7 +160,7 @@
     </style>
 </head>
 <body>
-
+<div class="app-container"></div>
     <header>
         <div style="display: flex; align-items: center; gap: 10px;">
             <span id="back-btn" onclick="backToSidebar()">➡️</span>
@@ -200,6 +228,20 @@
         let activeFriendId = null;
 
         window.onload = function() {
+            // منع الرجوع لصفحة تسجيل الدخول إذا كان المستخدم مسجل دخول فعلياً
+if (window.location.pathname.includes('dashboard.html') && localStorage.getItem('token')) {
+    history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+        // إذا كان على الموبايل والسايد بار مخفي، خليه يرجع يظهر السايد بار بدل ما يخرج
+        if (window.innerWidth <= 768 && document.getElementById('sidebar').classList.contains('hidden-mobile')) {
+            backToSidebar();
+            history.pushState(null, null, location.href);
+        } else {
+            // إذا كان في السايد بار أصلاً، يبقى في الصفحة
+            history.pushState(null, null, location.href);
+        }
+    };
+}
             if (!token) { window.location.href = 'login.html'; return; }
             try {
                 currentUser = JSON.parse(atob(token.split('.')[1]));
@@ -216,6 +258,8 @@
             document.getElementById('sidebar').classList.remove('hidden-mobile');
             document.getElementById('back-btn').style.display = "none";
             activeFriendId = null;
+            document.getElementById('chat-title').innerText = "اختر محادثة للبدء";
+    document.getElementById('input-area').style.display = "none"
         }
 
         async function loadFriends() {

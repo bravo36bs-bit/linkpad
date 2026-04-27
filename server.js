@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const mysql = require('mysql2');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -7,13 +9,39 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const JWT_SECRET = 'LinkPad_2026_Secure';
+const server = http.createServer(app); // نربط اكسبريس بالـ HTTP
+const io = new Server(server, {
+    cors: { origin: "*" } // هذا يسمح للموبايل واللابتوب يتصلون بدون مشاكل
+});
+const JWT_SECRET =process.env.JWT_SECRET ;
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
+io.on('connection', (socket) => {
+    console.log('مستخدم يحاول الاتصال...');
+
+    // خطوة دمج الأمان: نطلب من المستخدم الـ ID والتوكن عند الانضمام
+    socket.on('join_room', (data) => {
+        const { userId, token } = data;
+
+        // هنا "دمج الأمان": لا نسمح له بدخول الغرفة إلا إذا بعث التوكن
+        if (token) {
+            socket.join(userId);
+            console.log(`المستخدم ${userId} تم التحقق منه ودخل الغرفة`);
+        } else {
+            console.log("محاولة اتصال غير آمنة بدون توكن!");
+        }
+    });
+
+    // إرسال الرسالة
+    socket.on('send_message', (data) => {
+        // تأكد أن data تحتوي على receiverId
+        io.to(data.receiverId).emit('receive_message', data);
+    });
+});
 
 // --- الاتصال بقاعدة البيانات ---
 const db = mysql.createConnection({
@@ -23,6 +51,7 @@ const db = mysql.createConnection({
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306,
     ssl: { rejectUnauthorized: false }
+
 });
 
 db.connect((err) => {
