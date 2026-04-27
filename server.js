@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,58 +9,57 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const server = http.createServer(app); // نربط اكسبريس بالـ HTTP
+const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "*" } // هذا يسمح للموبايل واللابتوب يتصلون بدون مشاكل
+    cors: { origin: "*" }
 });
-const JWT_SECRET =process.env.JWT_SECRET ;
+
+const JWT_SECRET = process.env.JWT_SECRET || 'linkpad_super_secret_key';
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
-io.on('connection', (socket) => {
-    console.log('مستخدم يحاول الاتصال...');
 
-    // خطوة دمج الأمان: نطلب من المستخدم الـ ID والتوكن عند الانضمام
+// --- نظام السوكيت (Socket.io) ---
+io.on('connection', (socket) => {
+    console.log('📡 محاولة اتصال بالسوكيت...');
+
     socket.on('join_room', (data) => {
         const { userId, token } = data;
-
-        // هنا "دمج الأمان": لا نسمح له بدخول الغرفة إلا إذا بعث التوكن
         if (token) {
-            socket.join(userId);
-            console.log(`المستخدم ${userId} تم التحقق منه ودخل الغرفة`);
-        } else {
-            console.log("محاولة اتصال غير آمنة بدون توكن!");
+            socket.join(userId.toString());
+            console.log(`✅ المستخدم ${userId} دخل غرفته بنجاح`);
         }
     });
 
-    // إرسال الرسالة
     socket.on('send_message', (data) => {
-        // تأكد أن data تحتوي على receiverId
-        io.to(data.receiverId).emit('receive_message', data);
+        if (data.receiverId) {
+            io.to(data.receiverId.toString()).emit('receive_message', data);
+        }
     });
 });
 
-// --- الاتصال بقاعدة البيانات ---
+// --- الاتصال بقاعدة البيانات (التعديل الجوهري هنا) ---
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    database: process.env.DB_NAME || 'defaultdb',
     port: process.env.DB_PORT || 3306,
-    ssl: { rejectUnauthorized: false },
-    connectTimeout: 10000
-
+    ssl: { 
+        rejectUnauthorized: false // ضروري جداً لـ Aiven
+    },
+    connectTimeout: 20000 // زيادة وقت المحاولة لتجنب الـ Fatal Error
 });
 
 db.connect((err) => {
     if (err) {
-        console.error('❌ Database Connection Failed:', err.stack);
+        console.error('❌ Database Connection Failed:', err.message);
         return;
     }
-    console.log("✅ Connected to Aiven MySQL!");
+    console.log("✅ Connected to Aiven MySQL Successfully!");
     createTables();
 });
 
@@ -91,10 +89,13 @@ const createTables = () => {
         FOREIGN KEY (receiver_id) REFERENCES users(id)
     );`;
 
-    db.query(usersTable, () => {
-        db.query(friendsTable, () => {
-            db.query(messagesTable, () => {
-                console.log("🚀 LinkPad Engine Ready (No Email Required).");
+    db.query(usersTable, (err) => {
+        if (err) console.error("Error creating users table:", err);
+        db.query(friendsTable, (err) => {
+            if (err) console.error("Error creating friends table:", err);
+            db.query(messagesTable, (err) => {
+                if (err) console.error("Error creating messages table:", err);
+                console.log("🚀 LinkPad Engine Ready.");
             });
         });
     });
@@ -115,37 +116,36 @@ const authenticateToken = (req, res, next) => {
 
 // --- المسارات (Routes) ---
 
-// التسجيل (تم تعديله ليتناسب مع الواجهة بدون إيميل)
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "بيانات ناقصة" });
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-       db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
-    if (err) {
-        // هذا السطر راح يطبع لك الخطأ الحقيقي في الـ Logs بـ Render
-        console.error("Database Error:", err);
-
-        // إذا كان الخطأ فعلاً بسبب تكرار الاسم (كود الخطأ في MySQL هو ER_DUP_ENTRY)
-        if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: "اسم المستخدم موجود مسبقاً" });
-        }
-
-        // إذا كان الخطأ شي ثاني (مثل فشل اتصال)
-        return res.status(500).json({ error: "فشل في الاتصال بالسيرفر، حاول لاحقاً" });
+        db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
+            if (err) {
+                console.error("Registration DB Error:", err);
+                if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).json({ error: "اسم المستخدم موجود مسبقاً" });
+                }
+                return res.status(500).json({ error: "فشل في الاتصال بالسيرفر" });
+            }
+            res.status(200).json({ message: "Success" });
+        });
+    } catch (error) { 
+        res.status(500).json({ error: "Internal Server Error" }); 
     }
-    res.status(200).json({ message: "Success" });
-});
-    } catch { res.status(500).send("Internal Error"); }
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-        if (err || results.length === 0) return res.status(401).json({ error: "المستخدم غير موجود" });
+        if (err) return res.status(500).json({ error: "خطأ في قاعدة البيانات" });
+        if (results.length === 0) return res.status(401).json({ error: "المستخدم غير موجود" });
+        
         const isMatch = await bcrypt.compare(password, results[0].password);
         if (!isMatch) return res.status(401).json({ error: "كلمة المرور خاطئة" });
+        
         const token = jwt.sign({ id: results[0].id, username: results[0].username }, JWT_SECRET);
         res.json({ token });
     });
@@ -199,7 +199,6 @@ app.post('/accept-friend', authenticateToken, (req, res) => {
     });
 });
 
-// جلب الرسائل (مهمة جداً لعرض الوقت في واتساب)
 app.get('/get-messages/:friendId', authenticateToken, (req, res) => {
     const userId = req.user.id;
     const friendId = req.params.friendId;
@@ -223,4 +222,14 @@ app.post('/send-private-message', authenticateToken, (req, res) => {
     });
 });
 
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+// تشغيل السيرفر باستخدام الكائن server وليس app لدعم Socket.io
+server.listen(PORT, () => {
+    console.log(`
+    ---------------------------------------------------
+    🚀 LinkPad Server is Live!
+    🌐 Port: ${PORT}
+    📡 Socket.io Ready
+    ✅ Monitoring Database Connection...
+    ---------------------------------------------------
+    `);
+});
