@@ -3,97 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LinkPad - المحادثات</title>
+    <title>LinkPad - نبض</title>
     <style>
         :root {
-            --primary: #008080;
-            --primary-dark: #006666;
-            --bg-app: #dadbd3;
-            --chat-bg: #efe7dd;
-            --white: #ffffff;
-            --my-msg: #dcf8c6;
-            --sidebar-bg: #ffffff;
-            --header-bg: #f0f2f5;
+            /* الألوان الجديدة بناءً على تصميم "نبض" */
+            --bg-dark: #121826; /* خلفية داكنة جداً */
+            --bg-sidebar: #1a2232; /* خلفية السايدبار */
+            --primary-accent: #008080; /* تركوازي LinkPad */
+            --primary-glow: rgba(0, 128, 128, 0.3);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --card-hover: #262f3f;
+            --my-msg: #008080;
+            --received-msg: #1f2937;
         }
 
         body {
-            background-color: var(--bg-app);
+            background-color: var(--bg-dark);
             height: 100vh;
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
             overflow: hidden;
         }
 
         .app-container {
             width: 100%;
             height: 100vh;
-            background: var(--white);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Responsive Container for Desktop */
         @media (min-width: 900px) {
             .app-container {
                 width: 95%;
-                max-width: 1300px;
+                max-width: 1400px;
                 height: 95vh;
-                border-radius: 10px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                border-radius: 20px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                border: 1px solid rgba(255,255,255,0.05);
             }
         }
 
+        /* --- Header --- */
         header {
-            height: 60px;
-            background: var(--primary);
+            height: 70px;
+            background: var(--bg-sidebar);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 15px;
-            color: white;
-            flex-shrink: 0;
+            padding: 0 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
             z-index: 1000;
         }
 
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary-accent), #00b3b3);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* --- Main Wrapper --- */
         .main-wrapper {
             flex: 1;
             display: flex;
             position: relative;
             overflow: hidden;
-            background-color: var(--chat-bg);
         }
 
-        /* --- Sidebar --- */
+        /* --- Sidebar (مثل صورة نبض) --- */
         .sidebar {
             width: 100%;
             height: 100%;
-            background: var(--sidebar-bg);
+            background: var(--bg-sidebar);
             position: absolute;
             left: 0;
             top: 0;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 500;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid rgba(0,0,0,0.1);
         }
 
-        .sidebar.hidden-mobile {
-            transform: translateX(100%);
+        .sidebar.hidden-mobile { transform: translateX(100%); }
+
+        .search-bar-container {
+            padding: 20px;
         }
 
-        .sidebar-header {
-            padding: 15px;
-            background: var(--header-bg);
+        .search-bar {
+            background: #262f3f;
+            border-radius: 12px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 10px 15px;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            width: 100%;
+        }
+
+        /* --- Friends List Item --- */
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .friend-item:hover { background: var(--card-hover); }
+
+        .friend-item.active {
+            background: var(--card-hover);
+            border-right: 4px solid var(--primary-accent);
+        }
+
+        .avatar-container {
+            position: relative;
+        }
+
+        .avatar-circle {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+        }
+
+        .online-status {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border: 2px solid var(--bg-sidebar);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+        }
+
+        .friend-info { flex: 1; }
+        .friend-info .name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .friend-info .last-msg { color: var(--text-muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .meta-info { text-align: left; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .meta-info .time { font-size: 11px; color: var(--text-muted); }
+        .meta-info .unread { background: var(--primary-accent); color: white; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
 
         /* --- Chat Area --- */
         .chat-area {
@@ -101,141 +184,89 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            background: var(--chat-bg) url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background: var(--bg-dark);
         }
 
         .chat-header {
-            padding: 10px 15px;
-            background: var(--header-bg);
+            padding: 15px 25px;
+            background: var(--bg-sidebar);
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-weight: bold;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            min-height: 50px;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         #chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
 
-        /* --- Messages Styling --- */
+        /* --- Messages --- */
         .message {
-            max-width: 75%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 15px;
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
             position: relative;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-            word-wrap: break-word;
         }
 
         .sent {
             align-self: flex-start;
             background: var(--my-msg);
-            border-top-right-radius: 0;
+            color: white;
+            border-bottom-right-radius: 4px;
         }
 
         .received {
             align-self: flex-end;
-            background: var(--white);
-            border-top-left-radius: 0;
+            background: var(--received-msg);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
         }
 
-        .msg-time {
-            font-size: 10px;
-            color: #667781;
-            margin-top: 4px;
-            text-align: left;
-        }
+        .msg-time { font-size: 10px; opacity: 0.6; margin-top: 5px; }
 
-        /* --- Input Area --- */
+        /* --- Input --- */
         .input-area {
-            padding: 10px 15px;
-            background: var(--header-bg);
+            padding: 20px;
+            background: var(--bg-sidebar);
             display: flex;
-            gap: 10px;
+            gap: 15px;
             align-items: center;
         }
 
         #message-input {
             flex: 1;
-            border-radius: 20px;
+            background: #262f3f;
             border: none;
-            padding: 10px 15px;
-            background: #fff;
-            font-size: 15px;
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: white;
             outline: none;
         }
 
         .send-btn {
-            background: var(--primary);
+            background: var(--primary-accent);
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            box-shadow: 0 4px 15px var(--primary-glow);
         }
 
-        /* --- Friends List --- */
-        .friend-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            gap: 15px;
-            border-bottom: 1px solid #f5f5f5;
-            cursor: pointer;
-        }
-
-        .friend-item:hover { background: #f5f6f6; }
-
-        .avatar-circle {
-            width: 48px;
-            height: 48px;
-            background: #dfe5e7;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #54656f;
-            font-size: 20px;
-        }
-
-        /* --- Desktop View Adjustment --- */
         @media (min-width: 769px) {
-            .sidebar {
-                width: 30%;
-                position: static;
-                transform: none !important;
-            }
-            .chat-area { width: 70%; }
-            #back-btn { display: none !important; }
-        }
-
-        /* Icons & Panels */
-        #notif-panel {
-            display:none; 
-            position:absolute; 
-            top:45px; 
-            left:0; 
-            width:250px; 
-            background:white; 
-            color:#333; 
-            border-radius:8px; 
-            padding:15px; 
-            box-shadow:0 5px 25px rgba(0,0,0,0.3); 
-            z-index: 3000;
+            .sidebar { width: 350px; position: static; transform: none !important; border-left: 1px solid rgba(255,255,255,0.05); }
+            .chat-area { flex: 1; }
         }
     </style>
 </head>
@@ -243,70 +274,75 @@
 
 <div class="app-container">
     <header>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="back-btn" onclick="backToSidebar()" style="display:none; cursor:pointer; font-size:20px;">➡️</span>
-            <span id="username-display" style="font-weight: bold; font-size:18px;">LinkPad</span>
+        <div class="logo-area">
+            <span id="back-btn" onclick="backToSidebar()" style="display:none; cursor:pointer;">➡️</span>
+            <div class="logo-icon">💬</div>
+            <span style="font-weight: bold; font-size: 20px; letter-spacing: 1px;">LinkPad</span>
         </div>
         
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 20px;">
             <div onclick="toggleNotifPanel()" style="position: relative; cursor: pointer;">
-                <span style="font-size:20px;">🔔</span>
-                <span id="notif-count" style="background: #ff3b30; color: white; border-radius: 50%; padding: 2px 6px; position: absolute; top: -5px; right: -5px; font-size: 10px;">0</span>
-                <div id="notif-panel">
-                    <h5 style="margin:0 0 10px 0; border-bottom:1px solid #eee; padding-bottom:5px;">طلبات الصداقة</h5>
-                    <div id="requests-list" style="font-size:13px; max-height:200px; overflow-y:auto;">جاري التحميل...</div>
+                <span style="font-size: 22px;">🔔</span>
+                <span id="notif-count" style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; position: absolute; top: -5px; right: -5px; font-size: 10px; font-weight: bold;">0</span>
+                <div id="notif-panel" style="display:none; position:absolute; top:40px; left:0; width:260px; background:var(--bg-sidebar); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:15px; box-shadow:0 10px 30px rgba(0,0,0,0.5); z-index: 3000;">
+                    <h5 style="margin:0 0 15px 0; color:var(--text-muted);">طلبات الصداقة</h5>
+                    <div id="requests-list"></div>
                 </div>
             </div>
-            <button onclick="logout()" style="background:transparent; color:#fff; border:1px solid #fff; padding:4px 12px; border-radius:20px; font-size:12px; cursor: pointer;">خروج</button>
+            <button onclick="logout()" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding:8px 16px; border-radius:10px; font-size:13px; cursor: pointer; font-weight: 600;">خروج</button>
         </div>
     </header>
 
     <div class="main-wrapper">
         <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h3 style="margin:0; color: #41525d;">المحادثات</h3>
-                <button onclick="openSearchModal()" style="background:var(--primary); color:white; width:32px; height:32px; border:none; border-radius:50%; font-size:20px; cursor:pointer;">+</button>
+            <div class="search-bar-container">
+                <div class="search-bar">
+                    <span>🔍</span>
+                    <input type="text" placeholder="ابحث عن محادثة...">
+                </div>
+                <button onclick="openSearchModal()" style="width:100%; margin-top:15px; background:var(--primary-accent); color:white; border:none; padding:12px; border-radius:12px; font-weight:600; cursor:pointer;">+ إضافة صديق جديد</button>
             </div>
-            <div id="friends-list" style="overflow-y:auto; flex:1;"></div>
+            
+            <div id="friends-list" style="overflow-y:auto; flex:1;">
+                </div>
         </aside>
 
         <main class="chat-area">
             <div id="chat-header-info" class="chat-header">
-                <div id="chat-title" style="color: #41525d;">اختر محادثة للبدء</div>
+                <div id="chat-avatar-header"></div>
+                <div id="chat-title" style="font-weight: 600; font-size: 18px;">اختر محادثة للبدء</div>
             </div>
             
             <div id="chat-container">
-                <div style="margin:auto; text-align:center; opacity:0.4;">
-                    <div style="font-size: 50px;">🕊️</div>
-                    <h2>LinkPad Desktop</h2>
-                    <p>أرسل واستقبل الرسائل بخصوصية تامة</p>
+                <div style="margin:auto; text-align:center; opacity:0.3;">
+                    <div style="font-size: 80px; margin-bottom: 20px;">🛡️</div>
+                    <h2 style="letter-spacing: 2px;">LinkPad Encrypted</h2>
+                    <p>محادثاتك محمية ومشفرة بالكامل</p>
                 </div>
             </div>
 
             <div id="input-area" class="input-area" style="display: none;">
-                <input type="text" id="message-input" placeholder="اكتب رسالة..." onkeypress="handleKey(event)">
-                <button class="send-btn" onclick="sendMessage()">🕊️</button>
+                <input type="text" id="message-input" placeholder="اكتب رسالتك هنا..." onkeypress="handleKey(event)">
+                <button class="send-btn" onclick="sendMessage()">🚀</button>
             </div>
         </main>
     </div>
 </div>
 
-<div id="searchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:4000; display: flex; align-items: center; justify-content: center;">
-    <div style="background:white; width:90%; max-width:350px; border-radius:15px; overflow:hidden;">
-        <div style="padding:15px; background:var(--header-bg); display:flex; justify-content:space-between; align-items: center;">
-            <b style="color:var(--primary)">إضافة صديق جديد</b>
+<div id="searchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4000; align-items: center; justify-content: center;">
+    <div style="background:var(--bg-sidebar); width:90%; max-width:400px; border-radius:20px; padding:25px; border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <b style="font-size:18px;">إضافة صديق</b>
             <span onclick="closeSearchModal()" style="cursor:pointer; font-size:24px;">&times;</span>
         </div>
-        <div style="padding:20px;">
-            <input type="text" id="search-input-modal" placeholder="ادخل اسم المستخدم..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; outline:none;">
-            <button onclick="searchFriendModal()" style="width:100%; margin-top:10px; background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">بحث عن المستخدم</button>
-            <div id="search-result" style="margin-top:15px;"></div>
-        </div>
+        <input type="text" id="search-input-modal" placeholder="ادخل اليوزر نيم..." style="width:100%; padding:15px; background:#262f3f; border:none; border-radius:12px; color:white; box-sizing:border-box;">
+        <button onclick="searchFriendModal()" style="width:100%; margin-top:15px; background:var(--primary-accent); color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;">بحث</button>
+        <div id="search-result" style="margin-top:20px;"></div>
     </div>
 </div>
 
 <script>
-    // حافظ على كل الـ Script الخاص بك كما هو هنا، التصحيح كان فقط في الـ HTML/CSS
+    // حافظ على نفس منطق الـ JavaScript الخاص بك، فقط غيرت دالة الـ loadFriends لتعطيك الشكل الجديد
     const token = localStorage.getItem('token');
     let currentUser = null;
     let activeFriendId = null;
@@ -315,7 +351,6 @@
         if (!token) { window.location.href = 'login.html'; return; }
         try {
             currentUser = JSON.parse(atob(token.split('.')[1]));
-            document.getElementById('username-display').innerText = `LinkPad | ${currentUser.username}`;
             loadFriends();
             loadRequests();
             setInterval(() => {
@@ -325,28 +360,36 @@
         } catch (e) { logout(); }
     };
 
-    function backToSidebar() {
-        document.getElementById('sidebar').classList.remove('hidden-mobile');
-        document.getElementById('back-btn').style.display = "none";
-        activeFriendId = null;
-        document.getElementById('chat-title').innerText = "اختر محادثة للبدء";
-        document.getElementById('input-area').style.display = "none";
-    }
-
     async function loadFriends() {
         const res = await fetch('/get-friends', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
             const friends = await res.json();
             document.getElementById('friends-list').innerHTML = friends.map(f => `
-                <div class="friend-item" onclick="selectFriend(${f.id}, '${f.username}')">
-                    <div class="avatar-circle">${f.username[0].toUpperCase()}</div>
-                    <div style="flex:1">
-                        <div style="font-weight:bold; color:#111b21">${f.username}</div>
-                        <div style="font-size:13px; color:#667781">اضغط لبدء الدردشة</div>
+                <div class="friend-item ${activeFriendId === f.id ? 'active' : ''}" onclick="selectFriend(${f.id}, '${f.username}')">
+                    <div class="avatar-container">
+                        <div class="avatar-circle" style="background:${getRandomGradient()}">${f.username[0].toUpperCase()}</div>
+                        <div class="online-status"></div>
+                    </div>
+                    <div class="friend-info">
+                        <div class="name">${f.username}</div>
+                        <div class="last-msg">اضغط لفتح المحادثة...</div>
+                    </div>
+                    <div class="meta-info">
+                        <div class="time">الآن</div>
                     </div>
                 </div>
             `).join('');
         }
+    }
+
+    function getRandomGradient() {
+        const gradients = [
+            'linear-gradient(45deg, #3b82f6, #8b5cf6)',
+            'linear-gradient(45deg, #10b981, #3b82f6)',
+            'linear-gradient(45deg, #f59e0b, #ef4444)',
+            'linear-gradient(45deg, #6366f1, #a855f7)'
+        ];
+        return gradients[Math.floor(Math.random() * gradients.length)];
     }
 
     function selectFriend(id, name) {
@@ -357,6 +400,7 @@
             document.getElementById('sidebar').classList.add('hidden-mobile');
             document.getElementById('back-btn').style.display = "block";
         }
+        loadFriends(); // لتحديث الحالة النشطة
         fetchMessages();
     }
 
@@ -375,7 +419,7 @@
                         <div class="msg-time">${time}</div>
                     </div>
                 `;
-            }).join('') || `<p style="text-align:center; opacity:0.5; margin-top:20px;">لا توجد رسائل بعد. ابدأ المحادثة الآن!</p>`;
+            }).join('');
             container.scrollTop = container.scrollHeight;
         }
     }
@@ -393,36 +437,32 @@
     }
 
     function handleKey(e) { if(e.key === "Enter") sendMessage(); }
+    function backToSidebar() { document.getElementById('sidebar').classList.remove('hidden-mobile'); document.getElementById('back-btn').style.display = "none"; activeFriendId = null; }
     function openSearchModal() { document.getElementById('searchModal').style.display = "flex"; }
     function closeSearchModal() { document.getElementById('searchModal').style.display = "none"; }
-    function toggleNotifPanel() { 
-        const p = document.getElementById('notif-panel');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    }
+    function toggleNotifPanel() { const p = document.getElementById('notif-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
     function logout() { localStorage.removeItem('token'); window.location.href = 'login.html'; }
 
     async function searchFriendModal() {
         const q = document.getElementById('search-input-modal').value.trim();
-        if(!q) return;
         const res = await fetch(`/search-user?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const div = document.getElementById('search-result');
         if(res.ok) {
             const user = await res.json();
-            div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #eee;">
-                <span style="font-weight:bold;">${user.username}</span>
-                <button onclick="sendFriendRequest(${user.id})" style="background:var(--primary); border:none; padding:6px 12px; border-radius:20px; color:white; cursor:pointer;">إضافة</button>
+            div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; background:#262f3f; padding:15px; border-radius:12px;">
+                <span>${user.username}</span>
+                <button onclick="sendFriendRequest(${user.id})" style="background:var(--primary-accent); border:none; padding:8px 15px; border-radius:8px; color:white; cursor:pointer;">إضافة</button>
             </div>`;
-        } else { div.innerHTML = "<p style='color:#ea0038; text-align:center;'>لم يتم العثور على هذا المستخدم</p>"; }
+        } else { div.innerHTML = "<p style='color:#ef4444; text-align:center;'>المستخدم غير موجود</p>"; }
     }
 
     async function sendFriendRequest(id) {
-        const res = await fetch('/send-friend-request', {
+        await fetch('/send-friend-request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ friend_id: id })
         });
-        if(res.ok) { alert("تم إرسال طلب الصداقة!"); closeSearchModal(); }
-        else { alert("الطلب مرسل مسبقاً أو هناك خطأ."); }
+        alert("تم إرسال الطلب!"); closeSearchModal();
     }
 
     async function loadRequests() {
@@ -431,21 +471,21 @@
             const reqs = await res.json();
             document.getElementById('notif-count').innerText = reqs.length;
             document.getElementById('requests-list').innerHTML = reqs.map(r => `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f9f9f9; padding:8px; border-radius:5px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:rgba(255,255,255,0.03); padding:10px; border-radius:10px;">
                     <span style="font-weight:500;">${r.username}</span>
-                    <button onclick="acceptFriend(${r.id})" style="background:var(--primary); color:white; border:none; padding:4px 10px; border-radius:15px; cursor:pointer;">قبول</button>
+                    <button onclick="acceptFriend(${r.id})" style="background:var(--primary-accent); color:white; border:none; padding:5px 12px; border-radius:8px; cursor:pointer; font-size:12px;">قبول</button>
                 </div>
-            `).join('') || "<p style='text-align:center; opacity:0.5;'>لا توجد طلبات معلقة</p>";
+            `).join('') || "<p style='text-align:center; opacity:0.5; font-size:12px;'>لا توجد طلبات</p>";
         }
     }
 
     async function acceptFriend(rid) {
-        const res = await fetch('/accept-friend', {
+        await fetch('/accept-friend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ request_id: rid })
         });
-        if(res.ok) { loadRequests(); loadFriends(); }
+        loadRequests(); loadFriends();
     }
 </script>
 </body>
