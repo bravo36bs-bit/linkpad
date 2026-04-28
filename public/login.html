@@ -75,9 +75,9 @@
             transition: all 0.3s ease;
         }
 
-        button:hover {
-            filter: brightness(0.95);
-            transform: translateY(-2px);
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
         #msg {
@@ -120,7 +120,7 @@
             <input id="p" type="password" placeholder="كلمة المرور">
         </div>
 
-        <button type="button" onclick="login()">دخول</button>
+        <button id="loginBtn" type="button" onclick="login()">دخول</button>
 
         <div class="footer-links">
             ليس لديك حساب؟ <a href="register.html">سجل الآن</a>
@@ -131,35 +131,59 @@
         async function login() {
             const u = document.getElementById('u'),
                   p = document.getElementById('p'),
-                  m = document.getElementById('msg');
+                  m = document.getElementById('msg'),
+                  btn = document.getElementById('loginBtn');
+
+            // تنظيف المدخلات
+            const username = u.value.trim();
+            const password = p.value;
+
+            if (!username || !password) {
+                m.className = 'err';
+                m.innerText = "يرجى إدخال جميع البيانات";
+                return;
+            }
 
             m.style.display = 'none';
-            m.className = '';
+            btn.disabled = true;
+            btn.innerText = "جاري التحقق...";
 
             try {
                 const res = await fetch('https://linkpad-chat.onrender.com/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u.value.trim(), password: p.value })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
 
-                const data = await res.json(); // استخراج البيانات هنا لضمان عملها في النجاح والفشل
+                const data = await res.json();
 
-                if (res.ok) {
+                if (res.ok && data.token) {
                     m.className = 'ok';
-                    m.innerText = "أهلاً بك مجدداً! جاري الدخول...";
+                    m.innerText = "أهلاً بك! جاري تحويلك...";
+                    
+                    // تخزين البيانات
                     localStorage.setItem('token', data.token);
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('username', data.username);
+
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 1000);
                 } else {
                     m.className = 'err';
-                    m.innerText = data.error || "اسم المستخدم أو كلمة المرور غير صحيحة";
+                    m.innerText = data.error || "فشل تسجيل الدخول";
+                    btn.disabled = false;
+                    btn.innerText = "دخول";
                 }
-            } catch (e) {
+            } catch (error) {
                 m.className = 'err';
-                m.innerText = "فشل الاتصال بالسيرفر";
-                alert("Error Detail: " + error.message);
+                m.innerText = "تعذر الاتصال بالسيرفر. تأكد من الإنترنت.";
+                console.error("Login Error:", error);
+                btn.disabled = false;
+                btn.innerText = "دخول";
             }
         }
     </script>

@@ -81,7 +81,12 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        button:hover {
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
             filter: brightness(0.95);
             transform: translateY(-1px);
         }
@@ -126,7 +131,7 @@
             <input id="p" type="password" placeholder="كلمة المرور">
         </div>
 
-        <button type="button" onclick="reg()">إنشاء الحساب</button>
+        <button id="regBtn" type="button" onclick="reg()">إنشاء الحساب</button>
 
         <div class="footer-links">
             لديك حساب بالفعل؟ <a href="login.html">سجل دخولك</a>
@@ -134,6 +139,8 @@
     </div>
 
     <script>
+        const API_URL = 'https://linkpad-chat.onrender.com';
+
         // تفعيل الـ PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -142,22 +149,37 @@
         }
 
         async function reg() {
-            const u = document.getElementById('u').value.trim();
-            const p = document.getElementById('p').value.trim();
+            const uField = document.getElementById('u');
+            const pField = document.getElementById('p');
+            const btn = document.getElementById('regBtn');
             const m = document.getElementById('msg');
+            
+            const username = uField.value.trim();
+            const password = pField.value.trim();
 
-            if (!u || !p) {
+            if (!username || !password) {
                 m.className = 'err';
                 m.innerText = "يرجى إدخال البيانات المطلوبة";
                 return;
             }
 
+            // منع الضغط المتكرر
+            btn.disabled = true;
+            btn.innerText = "جاري الحفظ...";
+            m.style.display = 'none';
+
             try {
-                const res = await fetch('/register', {
+                // استخدام الرابط الكامل لضمان الوصول من الـ APK
+                const res = await fetch(`${API_URL}/register`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
+
+                const data = await res.json();
 
                 if (res.ok) {
                     m.className = 'ok';
@@ -166,13 +188,17 @@
                         window.location.href = 'login.html';
                     }, 1500);
                 } else {
-                    const data = await res.json();
                     m.className = 'err';
                     m.innerText = data.error || "فشل التسجيل، حاول مرة أخرى";
+                    btn.disabled = false;
+                    btn.innerText = "إنشاء الحساب";
                 }
-            } catch (e) {
+            } catch (error) {
                 m.className = 'err';
-                m.innerText = "فشل الاتصال بالسيرفر";
+                m.innerText = "فشل الاتصال بالسيرفر. تأكد من الإنترنت.";
+                console.error("Register Error:", error);
+                btn.disabled = false;
+                btn.innerText = "إنشاء الحساب";
             }
         }
     </script>
