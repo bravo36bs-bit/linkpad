@@ -135,6 +135,11 @@
     </div>
 
     <script>
+        
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+
         const socket = io();
         async function reg() {
             const u = document.getElementById('u').value.trim();
