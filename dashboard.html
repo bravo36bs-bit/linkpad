@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دردشة LinkPad</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+        #chat { 
+            height: 60vh; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            background: white; 
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        /* تعديل الألوان لتبدو احترافية */
+        .message { padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 14px; }
+        .my { align-self: flex-start; background-color: #008080; color: white; border-bottom-right-radius: 2px; }
+        .other { align-self: flex-end; background-color: #e4e6eb; color: black; border-bottom-left-radius: 2px; }
+        
+        .input-container { display: flex; gap: 5px; margin-top: 10px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        button { padding: 10px 20px; background: #008080; color: white; border: none; border-radius: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h4>مرحباً: <span id="my-name" style="color:#008080;"></span></h4>
+    
+    <div id="chat"></div>
+    
+    <div class="input-container">
+        <input id="msg" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key==='Enter') send()">
+        <button onclick="send()">إرسال</button>
+    </div>
+
+    <script>
+        const API_URL = 'https://linkpad-chat.onrender.com';
+        const token = localStorage.getItem('token');
+        
+        if(!token) window.location.href = 'login.html';
+
+        // فك التوكن بأمان
+        let myId, myName;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            myId = payload.id;
+            myName = payload.username;
+            document.getElementById('my-name').innerText = myName;
+        } catch(e) { window.location.href = 'login.html'; }
+
+        const friendId = 2; // للتجربة حالياً
+
+        async function loadMessages() {
+            try {
+                const res = await fetch(`${API_URL}/messages/${myId}/${friendId}`);
+                if (!res.ok) return;
+                const messages = await res.json();
+                
+                const chatDiv = document.getElementById('chat');
+                const isAtBottom = chatDiv.scrollHeight - chatDiv.scrollTop <= chatDiv.clientHeight + 50;
+
+                chatDiv.innerHTML = messages.map(m => `
+                    <div class="message ${m.sender_id == myId ? 'my' : 'other'}">
+                        ${m.content}
+                    </div>
+                `).join('');
+
+                // النزول لآخر رسالة فقط إذا كان المستخدم في الأسفل أصلاً
+                if (isAtBottom) {
+                    chatDiv.scrollTop = chatDiv.scrollHeight;
+                }
+            } catch (err) { console.error("خطأ في جلب البيانات"); }
+        }
+
+        async function send() {
+            const input = document.getElementById('msg');
+            const content = input.value.trim();
+            if(!content) return;
+
+            input.value = ''; // مسح الحقل فوراً لتجربة أسرع
+
+            try {
+                await fetch(`${API_URL}/send`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sender_id: myId, receiver_id: friendId, content: content})
+                });
+                loadMessages();
+            } catch (err) { alert("فشل إرسال الرسالة"); }
+        }
+
+        // تحديث كل 3 ثوانٍ
+        setInterval(loadMessages, 3000);
+        loadMessages();
+    </script>
+</body>
+</html>

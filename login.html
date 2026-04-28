@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دخول LinkPad</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+</head>
+<body>
+    <h2>تسجيل الدخول</h2>
+    <input id="user" placeholder="اسم المستخدم"><br><br>
+    <input id="pass" type="password" placeholder="كلمة السر"><br><br>
+    <button id="loginBtn" onclick="login()">دخول</button>
+
+    <script>
+        async function login() {
+            const userField = document.getElementById('user').value;
+            const passField = document.getElementById('pass').value;
+            const btn = document.getElementById('loginBtn');
+
+            // منع الضغط المتكرر أثناء التحميل
+            btn.disabled = true;
+            btn.innerText = "جاري التحميل...";
+
+            try {
+                const res = await fetch('https://linkpad-chat.onrender.com/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: userField, 
+                        password: passField
+                    })
+                });
+
+                const data = await res.json();
+
+                if(res.ok && data.token) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // إظهار الرسالة القادمة من السيرفر أو رسالة افتراضية
+                    alert(data.error || "خطأ في اسم المستخدم أو كلمة السر");
+                    btn.disabled = false;
+                    btn.innerText = "دخول";
+                }
+            } catch (error) {
+                // في حال تعذر الوصول للسيرفر نهائياً
+                alert("تعذر الاتصال بالسيرفر. تأكد من الإنترنت.");
+                btn.disabled = false;
+                btn.innerText = "دخول";
+            }
+        }
+    </script>
+</body>
+</html>
