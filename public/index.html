@@ -7,7 +7,6 @@
     <title>LinkPad - إنشاء حساب</title>
     <style>
         :root {
-            /* ألوان واتساب الرسمية */
             --wa-dark: #075E54;
             --wa-teal: #128C7E;
             --wa-green: #25D366;
@@ -135,18 +134,18 @@
     </div>
 
     <script>
-        
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
+        // تفعيل الـ PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log("SW error:", err));
+            });
+        }
 
-        const socket = io();
         async function reg() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value.trim();
             const m = document.getElementById('msg');
 
-            // التحقق من الحقول (اسم المستخدم وكلمة المرور فقط)
             if (!u || !p) {
                 m.className = 'err';
                 m.innerText = "يرجى إدخال البيانات المطلوبة";
@@ -157,7 +156,6 @@
                 const res = await fetch('/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // نرسل اليوزر والباسورد فقط للسيرفر
                     body: JSON.stringify({ username: u, password: p })
                 });
 
