@@ -1,17 +1,18 @@
 {
   "name": "LinkPad Chat",
   "short_name": "LinkPad",
- "start_url": "https://linkpad-chat.onrender.com/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "scope": "https://linkpad-chat.onrender.com/",
+  "theme_color": "#2196f3",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
-
     {
-      "src": "https://linkpad-chat.onrender.com/linkpadimage.jpg",
+      "src": "linkpadimage.jpg",
       "sizes": "512x512",
-      "type": "image/jpg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
