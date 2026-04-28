@@ -16,11 +16,24 @@ const io = new Server(server, {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'linkpad_super_secret_key';
 const PORT = process.env.PORT || 3000;
-app.use(cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
+// --- دعم ملفات PWA لضمان ظهور الأيقونة والتثبيت ---
+app.get('/manifest.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+});
+
+app.get('/sw.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+
+// هذا السطر يضمن الوصول للصورة مباشرة من الرابط الرئيسي
+app.get('/linkpadimage.jpg', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'linkpadimage.jpg'));
+});
 
 // --- نظام السوكيت (Socket.io) ---
 io.on('connection', (socket) => {
