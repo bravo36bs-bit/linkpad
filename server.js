@@ -355,7 +355,22 @@ io.on('connection', socket => {
         }
     });
 });
-
+app.get('/migrate', async (req, res) => {
+    try {
+        await query(`DROP TABLE IF EXISTS friends`);
+        await query(`CREATE TABLE friends (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id INT NOT NULL,
+            receiver_id INT NOT NULL,
+            status ENUM('pending','accepted','rejected') DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_pair (sender_id, receiver_id),
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        res.json({ success: true });
+    } catch(e) { res.json({ error: e.message }); }
+});
 // ─── تشغيل ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log(`Falcon Meet running on port ${PORT} ✅`));
