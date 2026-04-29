@@ -437,14 +437,15 @@ let currentFriend = null;
     }
 
     // ===== تشغيل =====
-    connectSocket();
+  connectSocket();
+loadFriendRequests();
+loadFriends().then(() => {
     const saved = localStorage.getItem('currentFriend');
-if (saved) {
-    const f = JSON.parse(saved);
-    openChat(f.id, f.username);
-}
-    loadFriends();
-    loadFriendRequests();
+    if (saved) {
+        const f = JSON.parse(saved);
+        openChat(f.id, f.username);
+    }
+});
 </script>
 </body>
 </html>
