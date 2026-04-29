@@ -1,451 +1,680 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>LinkPad - دردشة</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    <style>
-        :root {
-            --teal: #008080;
-            --teal-dark: #005f5f;
-            --teal-light: #00b3b3;
-            --bg: #0a0f0f;
-            --card: #111a1a;
-            --card2: #0d1515;
-            --border: #1a2e2e;
-            --text: #e8f4f4;
-            --muted: #5a8a8a;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; display: flex; overflow: hidden; }
+<meta charset="UTF-8">
+<title>Falcon Meet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+:root {
+    --bg:    #080d0d;
+    --card:  #0f1a1a;
+    --card2: #0b1414;
+    --border:#1c3333;
+    --teal:  #009999;
+    --teal2: #00cccc;
+    --text:  #dff0f0;
+    --muted: #4d8080;
+    --red:   #cc3333;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Tajawal',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    height:100dvh;
+    display:flex;
+    overflow:hidden;
+}
 
-        /* ===== Sidebar ===== */
-        .sidebar { width: 280px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s; }
-        .sidebar-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-header h2 { font-size: 1.3rem; font-weight: 900; color: var(--teal-light); }
-        .sidebar-actions { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
-        .icon-btn:hover { border-color: var(--teal); color: var(--teal-light); }
-        .badge { position: absolute; top: -5px; left: -5px; background: #ff4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; display: none; }
-        .my-info { padding: 12px 20px; background: var(--card2); border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
-        .my-info span { color: var(--teal-light); font-weight: 700; }
-        .section-title { padding: 12px 20px 8px; font-size: 0.75rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-        .friends-list { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
-        .friends-list::-webkit-scrollbar { width: 3px; }
-        .friends-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        .friend-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 3px; }
-        .friend-item:hover { background: var(--card2); }
-        .friend-item.active { background: rgba(0,128,128,0.15); border: 1px solid rgba(0,128,128,0.3); }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--teal-dark); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: white; flex-shrink: 0; }
-        .friend-info { flex: 1; min-width: 0; }
-        .friend-name { font-size: 0.9rem; font-weight: 500; }
-        .unread { background: var(--teal); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; display: none; }
-        .empty-list { text-align: center; color: var(--muted); padding: 25px 15px; font-size: 0.85rem; line-height: 1.8; }
+/* ══════════════ Sidebar ══════════════ */
+.sidebar {
+    width:270px;
+    background:var(--card);
+    border-left:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+    transition:transform .3s;
+}
+.sb-head {
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.sb-head .logo {
+    font-size:1.2rem; font-weight:900;
+    background:linear-gradient(135deg,var(--teal),var(--teal2));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    flex:1;
+}
+.icon-btn {
+    width:32px; height:32px;
+    border-radius:8px;
+    background:none;
+    border:1px solid var(--border);
+    color:var(--muted);
+    cursor:pointer;
+    font-size:.95rem;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .2s;
+    position:relative;
+    flex-shrink:0;
+}
+.icon-btn:hover { border-color:var(--teal); color:var(--teal2); }
+.icon-btn.danger:hover { border-color:var(--red); color:var(--red); }
+.badge {
+    position:absolute; top:-5px; left:-5px;
+    background:var(--red); color:#fff;
+    border-radius:50%;
+    width:15px; height:15px;
+    font-size:.6rem;
+    display:none; align-items:center; justify-content:center;
+}
+.me-bar {
+    padding:10px 16px;
+    background:var(--card2);
+    border-bottom:1px solid var(--border);
+    font-size:.82rem; color:var(--muted);
+}
+.me-bar b { color:var(--teal2); }
+.sec-label {
+    padding:12px 16px 6px;
+    font-size:.72rem; color:var(--muted);
+    letter-spacing:1px; text-transform:uppercase;
+}
+.friends-list {
+    flex:1; overflow-y:auto;
+    padding:0 8px 8px;
+}
+.friends-list::-webkit-scrollbar { width:3px; }
+.friends-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.f-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 10px;
+    border-radius:11px;
+    cursor:pointer;
+    transition:all .2s;
+    margin-bottom:2px;
+    position:relative;
+}
+.f-item:hover { background:var(--card2); }
+.f-item.active {
+    background:rgba(0,153,153,.13);
+    border:1px solid rgba(0,153,153,.28);
+}
+.avatar {
+    width:38px; height:38px; border-radius:50%;
+    background:var(--teal);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.95rem; font-weight:700; color:#fff;
+    flex-shrink:0;
+}
+.avatar.sm { width:33px; height:33px; font-size:.85rem; }
+.f-name { font-size:.88rem; font-weight:500; flex:1; }
+.unread-dot {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--teal2);
+    display:none;
+}
+.empty-hint {
+    text-align:center; color:var(--muted);
+    padding:20px 12px; font-size:.83rem; line-height:1.9;
+}
 
-        /* ===== Search Panel ===== */
-        .panel { position: absolute; top: 0; right: 0; width: 280px; height: 100%; background: var(--card); border-left: 1px solid var(--border); z-index: 200; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
-        .panel.open { transform: translateX(0); }
-        .panel-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .panel-header h3 { font-size: 1rem; font-weight: 700; }
-        .close-btn { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
-        .search-input { margin: 15px; padding: 10px 15px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; outline: none; }
-        .search-input:focus { border-color: var(--teal); }
-        .search-results { flex: 1; overflow-y: auto; padding: 0 15px; }
-        .search-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; margin-bottom: 5px; }
-        .search-item .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
-        .search-item span { flex: 1; font-size: 0.9rem; }
-        .add-btn { background: var(--teal); border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; transition: all 0.2s; }
-        .add-btn:hover { background: var(--teal-light); }
-        .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ══════════════ Panels ══════════════ */
+.panel {
+    position:fixed;
+    top:0; right:0;
+    width:270px; height:100%;
+    background:var(--card);
+    border-left:1px solid var(--border);
+    z-index:300;
+    display:flex; flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .3s;
+}
+.panel.open { transform:translateX(0); }
+.p-head {
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+}
+.p-head h3 { font-size:.95rem; font-weight:700; }
+.close-btn {
+    background:none; border:none;
+    color:var(--muted); font-size:1.1rem; cursor:pointer;
+}
+.p-body { flex:1; overflow-y:auto; padding:12px; }
+.p-body::-webkit-scrollbar { width:3px; }
+.p-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.search-box {
+    width:100%; padding:10px 14px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Tajawal',sans-serif;
+    font-size:.88rem; outline:none;
+    margin-bottom:12px;
+    transition:border-color .2s;
+}
+.search-box:focus { border-color:var(--teal); }
+.s-item {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px;
+    border-radius:10px;
+    margin-bottom:5px;
+}
+.s-item span { flex:1; font-size:.87rem; }
+.add-btn {
+    background:var(--teal); border:none; color:#fff;
+    padding:5px 11px; border-radius:7px;
+    cursor:pointer; font-family:'Tajawal',sans-serif;
+    font-size:.78rem; font-weight:600;
+    transition:all .2s;
+}
+.add-btn:hover { background:var(--teal2); }
+.add-btn:disabled { opacity:.5; cursor:not-allowed; }
+.req-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px; border-radius:10px;
+    background:var(--card2); margin-bottom:8px;
+}
+.req-item span { flex:1; font-size:.87rem; }
+.req-btns { display:flex; gap:5px; }
+.acc-btn {
+    background:var(--teal); border:none; color:#fff;
+    padding:5px 10px; border-radius:7px;
+    cursor:pointer; font-family:'Tajawal',sans-serif; font-size:.78rem;
+}
+.rej-btn {
+    background:none; border:1px solid var(--red); color:var(--red);
+    padding:5px 10px; border-radius:7px;
+    cursor:pointer; font-family:'Tajawal',sans-serif; font-size:.78rem;
+}
 
-        /* ===== Requests Panel ===== */
-        .request-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; background: var(--card2); }
-        .request-item .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
-        .request-item span { flex: 1; font-size: 0.9rem; }
-        .req-btns { display: flex; gap: 5px; }
-        .accept-btn { background: var(--teal); border: none; color: white; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; }
-        .reject-btn { background: none; border: 1px solid #ff4444; color: #ff4444; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; }
+/* ══════════════ Chat Area ══════════════ */
+.chat {
+    flex:1; display:flex; flex-direction:column; overflow:hidden;
+}
+.welcome {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    color:var(--muted); gap:10px;
+}
+.welcome .ico { font-size:3rem; }
+.welcome h3 { font-size:1rem; color:var(--text); }
+.welcome p  { font-size:.82rem; }
+.chat-head {
+    padding:13px 18px;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    display:none; align-items:center; gap:10px;
+}
+.chat-head .f-name { font-weight:700; font-size:.95rem; }
+.back-btn {
+    display:none; background:none; border:none;
+    color:var(--muted); font-size:1.2rem; cursor:pointer;
+    margin-right:auto;
+}
+.msgs {
+    flex:1; overflow-y:auto;
+    padding:14px 16px;
+    display:none; flex-direction:column; gap:5px;
+}
+.msgs::-webkit-scrollbar { width:3px; }
+.msgs::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
-        /* ===== Chat Area ===== */
-        .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 12px; }
-        .welcome-screen .icon { font-size: 3.5rem; }
-        .welcome-screen h3 { font-size: 1.1rem; color: var(--text); }
-        .chat-header { padding: 15px 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; display: none; }
-        .chat-header .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
-        .chat-header-name { font-weight: 700; }
-        .back-btn { display: none; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; margin-left: auto; }
-        .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 6px; display: none; }
-        .messages::-webkit-scrollbar { width: 3px; }
-        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+/* رسالة */
+.mw { display:flex; flex-direction:column; }
+.mw.mine  { align-items:flex-start; }
+.mw.other { align-items:flex-end; }
+.bubble {
+    max-width:68%;
+    padding:9px 13px;
+    border-radius:16px;
+    font-size:.9rem; line-height:1.55;
+    word-break:break-word;
+    position:relative;
+    cursor:pointer;
+    animation:pop .18s ease;
+}
+@keyframes pop {
+    from { opacity:0; transform:translateY(5px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.mw.mine  .bubble { background:var(--teal); color:#fff; border-bottom-right-radius:4px; }
+.mw.other .bubble { background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.bubble:hover .del-btn { display:flex; }
+.del-btn {
+    display:none;
+    position:absolute; top:-9px; left:-9px;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--red); border:none; color:#fff;
+    font-size:.6rem; cursor:pointer;
+    align-items:center; justify-content:center;
+}
+.meta {
+    display:flex; align-items:center; gap:4px;
+    margin-top:2px; padding:0 3px;
+}
+.meta .time { font-size:.67rem; color:var(--muted); }
+.meta .seen { font-size:.72rem; color:var(--teal2); }
 
-        /* الرسائل */
-        .msg-wrapper { display: flex; flex-direction: column; }
-        .msg-wrapper.mine { align-items: flex-start; }
-        .msg-wrapper.other { align-items: flex-end; }
-        .message { max-width: 70%; padding: 9px 13px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5; animation: msgIn 0.2s ease; word-break: break-word; position: relative; cursor: pointer; }
-        .message:hover .delete-btn { display: flex; }
-        @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .msg-wrapper.mine .message { background: var(--teal); color: white; border-bottom-right-radius: 4px; }
-        .msg-wrapper.other .message { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-        .msg-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; padding: 0 4px; }
-        .msg-time { font-size: 0.68rem; color: var(--muted); }
-        .seen-icon { font-size: 0.75rem; color: var(--teal-light); }
-        .delete-btn { display: none; position: absolute; top: -10px; left: -10px; background: #ff4444; border: none; color: white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 0.7rem; align-items: center; justify-content: center; }
+/* Input */
+.input-bar {
+    padding:11px 14px;
+    background:var(--card);
+    border-top:1px solid var(--border);
+    display:none; align-items:center; gap:8px;
+}
+.input-bar input {
+    flex:1; padding:11px 15px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:22px;
+    color:var(--text);
+    font-family:'Tajawal',sans-serif; font-size:.9rem;
+    outline:none; transition:border-color .2s;
+}
+.input-bar input:focus { border-color:var(--teal); }
+.input-bar input::placeholder { color:#1a3333; }
+.send-btn {
+    width:40px; height:40px; border-radius:50%;
+    background:var(--teal); border:none; color:#fff;
+    font-size:1rem; cursor:pointer;
+    transition:all .2s; flex-shrink:0;
+}
+.send-btn:hover { background:var(--teal2); transform:scale(1.06); }
 
-        /* حقل الإرسال */
-        .input-area { padding: 12px 15px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; display: none; }
-        .input-area input { flex: 1; padding: 11px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 22px; color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-        .input-area input:focus { border-color: var(--teal); }
-        .input-area input::placeholder { color: #2a4a4a; }
-        .send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--teal); border: none; color: white; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
-        .send-btn:hover { background: var(--teal-light); transform: scale(1.05); }
+/* Toast */
+.toast {
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--card); border:1px solid var(--teal);
+    color:var(--text); padding:9px 18px;
+    border-radius:10px; font-size:.84rem;
+    z-index:999; opacity:0; pointer-events:none;
+    transition:opacity .3s; white-space:nowrap;
+}
+.toast.show { opacity:1; }
 
-        /* Toast */
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--teal); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-        .toast.show { opacity: 1; }
+/* Notification sound visual */
+.notif-flash {
+    animation: flash .4s ease;
+}
+@keyframes flash {
+    0%,100% { background:var(--card2); }
+    50%      { background:rgba(0,153,153,.2); }
+}
 
-        /* موبايل */
-        @media (max-width: 600px) {
-            .sidebar { position: fixed; top: 0; right: 0; height: 100%; z-index: 100; }
-            .sidebar.hidden { transform: translateX(100%); }
-            .back-btn { display: flex !important; }
-            .panel { width: 100%; }
-        }
-    </style>
+/* Mobile */
+@media (max-width:600px) {
+    .sidebar { position:fixed; top:0; right:0; height:100%; z-index:100; }
+    .sidebar.hidden { transform:translateX(100%); }
+    .panel { width:100%; }
+    .back-btn { display:flex !important; }
+}
+</style>
 </head>
 <body>
 
-<!-- Sidebar -->
+<!-- ═══ Sidebar ═══ -->
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h2>LinkPad</h2>
-        <div class="sidebar-actions">
-            <!-- طلبات الصداقة -->
-            <button class="icon-btn" onclick="togglePanel('requestsPanel')" title="طلبات الصداقة">
-                🔔
-                <span class="badge" id="requestsBadge">0</span>
-            </button>
-            <!-- إضافة صديق -->
-            <button class="icon-btn" onclick="togglePanel('searchPanel')" title="إضافة صديق">➕</button>
-            <!-- خروج -->
-            <button class="icon-btn" onclick="logout()" title="خروج" style="border-color:#ff4444; color:#ff4444;">⏻</button>
-        </div>
+    <div class="sb-head">
+        <span class="logo">🦅 Falcon Meet</span>
+        <button class="icon-btn" title="طلبات الصداقة" onclick="openPanel('reqPanel')">
+            🔔 <span class="badge" id="reqBadge"></span>
+        </button>
+        <button class="icon-btn" title="إضافة صديق" onclick="openPanel('searchPanel')">➕</button>
+        <button class="icon-btn danger" title="خروج" onclick="logout()">⏻</button>
     </div>
-    <div class="my-info">أنت: <span id="my-name">...</span></div>
-    <div class="section-title">الأصدقاء</div>
+    <div class="me-bar">مرحباً <b id="myName">...</b></div>
+    <div class="sec-label">الأصدقاء</div>
     <div class="friends-list" id="friendsList">
-        <div class="empty-list">ما عندك أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>
+        <div class="empty-hint">لا يوجد أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>
     </div>
 </div>
 
-<!-- Panel البحث -->
+<!-- ═══ Panel: البحث ═══ -->
 <div class="panel" id="searchPanel">
-    <div class="panel-header">
+    <div class="p-head">
         <h3>إضافة صديق</h3>
-        <button class="close-btn" onclick="togglePanel('searchPanel')">✕</button>
+        <button class="close-btn" onclick="closePanel('searchPanel')">✕</button>
     </div>
-    <input class="search-input" id="searchInput" placeholder="ابحث عن مستخدم..." oninput="searchUsers()">
-    <div class="search-results" id="searchResults"></div>
+    <div class="p-body">
+        <input class="search-box" id="searchBox" placeholder="ابحث باسم المستخدم..." oninput="doSearch()">
+        <div id="searchResults"></div>
+    </div>
 </div>
 
-<!-- Panel طلبات الصداقة -->
-<div class="panel" id="requestsPanel">
-    <div class="panel-header">
+<!-- ═══ Panel: الطلبات ═══ -->
+<div class="panel" id="reqPanel">
+    <div class="p-head">
         <h3>طلبات الصداقة</h3>
-        <button class="close-btn" onclick="togglePanel('requestsPanel')">✕</button>
+        <button class="close-btn" onclick="closePanel('reqPanel')">✕</button>
     </div>
-    <div class="search-results" id="requestsList" style="padding-top:10px;"></div>
+    <div class="p-body" id="reqList">
+        <div class="empty-hint">لا توجد طلبات</div>
+    </div>
 </div>
 
-<!-- Chat Area -->
-<div class="chat-area">
-    <div class="welcome-screen" id="welcomeScreen">
-        <div class="icon">💬</div>
-        <h3>اختر صديقاً للدردشة</h3>
-        <p style="font-size:0.85rem;">اختر من القائمة على اليمين</p>
+<!-- ═══ Chat ═══ -->
+<div class="chat">
+    <div class="welcome" id="welcome">
+        <div class="ico">🦅</div>
+        <h3>مرحباً بك في Falcon Meet</h3>
+        <p>اختر صديقاً من القائمة للبدء</p>
     </div>
-    <div class="chat-header" id="chatHeader">
-        <div class="avatar" id="friendAvatar"></div>
-        <div class="chat-header-name" id="friendName"></div>
+    <div class="chat-head" id="chatHead">
+        <div class="avatar sm" id="chatAvatar"></div>
+        <div class="f-name" id="chatName"></div>
         <button class="back-btn" onclick="showSidebar()">→</button>
     </div>
-    <div class="messages" id="messages"></div>
-    <div class="input-area" id="inputArea">
-        <input id="msgInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button class="send-btn" onclick="sendMessage()">↑</button>
+    <div class="msgs" id="msgs"></div>
+    <div class="input-bar" id="inputBar">
+        <input id="msgInput" placeholder="اكتب رسالتك..."
+            onkeypress="if(event.key==='Enter')sendMsg()">
+        <button class="send-btn" onclick="sendMsg()">↑</button>
     </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-     let token = localStorage.getItem('token');
-let currentFriend = null;
-    
-    let socket = null;
-    const API_URL = 'https://linkpad-chat.onrender.com';
-    
-    if (!token) window.location.href = 'login.html';
+// ─── Init ───────────────────────────────────────────────────
+const API   = 'https://linkpad-chat.onrender.com';
+const token = localStorage.getItem('token');
+if (!token) location.href = 'login.html';
 
-    let myId, myName;
+let myId, myName, currentFriend = null, socket;
+
+try {
+    const p = JSON.parse(atob(token.split('.')[1]));
+    myId   = p.id;
+    myName = p.username;
+    document.getElementById('myName').textContent = myName;
+} catch { location.href = 'login.html'; }
+
+// ─── Socket ─────────────────────────────────────────────────
+function initSocket() {
+    socket = io(API);
+
+    socket.on('connect', () => socket.emit('register', myId));
+
+    socket.on('receive_message', msg => {
+        // بس إذا المحادثة الحالية هي هذي
+        if (currentFriend &&
+            ((msg.sender_id == currentFriend.id && msg.receiver_id == myId) ||
+             (msg.sender_id == myId && msg.receiver_id == currentFriend.id))) {
+            appendMsg(msg);
+        } else {
+            // إشعار برسالة جديدة من صديق آخر
+            const fi = document.getElementById(`fi-${msg.sender_id}`);
+            if (fi) {
+                fi.classList.add('notif-flash');
+                const dot = fi.querySelector('.unread-dot');
+                if (dot) dot.style.display = 'block';
+                setTimeout(() => fi.classList.remove('notif-flash'), 400);
+            }
+            showToast('رسالة جديدة 💬');
+        }
+    });
+
+    socket.on('messages_seen', ({ by }) => {
+        if (currentFriend && by == currentFriend.id) {
+            document.querySelectorAll('.seen').forEach(el => el.textContent = '✓✓');
+        }
+    });
+
+    socket.on('message_deleted', ({ id }) => {
+        document.getElementById(`mw-${id}`)?.remove();
+    });
+
+    socket.on('friend_request', data => {
+        showToast(`طلب صداقة من ${data.from_username} 🔔`);
+        loadRequests();
+    });
+
+    socket.on('friend_accepted', data => {
+        showToast(`${data.by_username} قبل طلب صداقتك! 🎉`);
+        loadFriends();
+    });
+}
+
+// ─── Friends ────────────────────────────────────────────────
+async function loadFriends() {
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        myId = payload.id;
-        myName = payload.username;
-        document.getElementById('my-name').textContent = myName;
-    } catch { window.location.href = 'login.html'; }
-    
-   
+        const res   = await fetch(`${API}/friends`, { headers: { authorization: token } });
+        const list  = await res.json();
+        const el    = document.getElementById('friendsList');
 
-    // ===== Socket.io =====
-    function connectSocket() {
-        socket = io(API_URL);
-        socket.on('connect', () => socket.emit('register', myId));
-
-        socket.on('receive_message', (msg) => {
-            if (currentFriend && (msg.sender_id == currentFriend.id || msg.receiver_id == currentFriend.id)) {
-                appendMessage(msg);
-            }
-        });
-
-        socket.on('message_deleted', ({ id }) => {
-            const el = document.getElementById(`msg-${id}`);
-            if (el) el.remove();
-        });
-
-        socket.on('friend_request', (data) => {
-            showToast(`طلب صداقة من ${data.from_username}`);
-            loadFriendRequests();
-        });
-    }
-
-    // ===== الأصدقاء =====
-    async function loadFriends() {
-        try {
-            const res = await fetch(`${API_URL}/friends`, { headers: { 'authorization': token } });
-            const friends = await res.json();
-            const list = document.getElementById('friendsList');
-            if (!friends.length) {
-                list.innerHTML = '<div class="empty-list">ما عندك أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>';
-                return;
-            }
-            list.innerHTML = friends.map(f => `
-                <div class="friend-item" id="friend-${f.id}" onclick="openChat(${f.id}, '${f.username}')">
-                    <div class="avatar">${f.username[0].toUpperCase()}</div>
-                    <div class="friend-info">
-                        <div class="friend-name">${f.username}</div>
-                    </div>
-                </div>
-            `).join('');
-        } catch { console.error('خطأ في جلب الأصدقاء'); }
-    }
-
-    // ===== طلبات الصداقة =====
-    async function loadFriendRequests() {
-        try {
-            const res = await fetch(`${API_URL}/friend-requests`, { headers: { 'authorization': token } });
-            const requests = await res.json();
-            const badge = document.getElementById('requestsBadge');
-            if (requests.length > 0) {
-                badge.style.display = 'flex';
-                badge.textContent = requests.length;
-            } else {
-                badge.style.display = 'none';
-            }
-            const list = document.getElementById('requestsList');
-            if (!requests.length) {
-                list.innerHTML = '<div class="empty-list">لا يوجد طلبات صداقة</div>';
-                return;
-            }
-            list.innerHTML = requests.map(r => `
-                <div class="request-item" id="req-${r.id}">
-                    <div class="avatar">${r.username[0].toUpperCase()}</div>
-                    <span>${r.username}</span>
-                    <div class="req-btns">
-                        <button class="accept-btn" onclick="respondRequest(${r.id}, 'accepted')">قبول</button>
-                        <button class="reject-btn" onclick="respondRequest(${r.id}, 'rejected')">رفض</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch { console.error('خطأ'); }
-    }
-
-    async function respondRequest(requestId, action) {
-        try {
-            await fetch(`${API_URL}/friend-response`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'authorization': token },
-                body: JSON.stringify({ request_id: requestId, action })
-            });
-            document.getElementById(`req-${requestId}`)?.remove();
-            if (action === 'accepted') {
-                loadFriends();
-                showToast('تمت إضافة الصديق! 🎉');
-            }
-            loadFriendRequests();
-        } catch { console.error('خطأ'); }
-    }
-
-    // ===== البحث =====
-    let searchTimeout;
-    async function searchUsers() {
-        const query = document.getElementById('searchInput').value.trim();
-        const results = document.getElementById('searchResults');
-        if (!query) { results.innerHTML = ''; return; }
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(async () => {
-            try {
-                const res = await fetch(`${API_URL}/search/${query}`, { headers: { 'authorization': token } });
-                const users = await res.json();
-                if (!users.length) { results.innerHTML = '<div class="empty-list">لا يوجد نتائج</div>'; return; }
-                results.innerHTML = users.map(u => `
-                    <div class="search-item">
-                        <div class="avatar">${u.username[0].toUpperCase()}</div>
-                        <span>${u.username}</span>
-                        <button class="add-btn" id="add-${u.id}" onclick="sendFriendRequest(${u.id})">إضافة</button>
-                    </div>
-                `).join('');
-            } catch { console.error('خطأ'); }
-        }, 400);
-    }
-
-    async function sendFriendRequest(friendId) {
-        const btn = document.getElementById(`add-${friendId}`);
-        if (btn) { btn.disabled = true; btn.textContent = 'تم الإرسال'; }
-        try {
-            const res = await fetch(`${API_URL}/friend-request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'authorization': token },
-                body: JSON.stringify({ friend_id: friendId })
-            });
-            const data = await res.json();
-            if (!res.ok) { showToast(data.error); if (btn) { btn.disabled = false; btn.textContent = 'إضافة'; } }
-            else showToast('تم إرسال طلب الصداقة ✅');
-        } catch { console.error('خطأ'); }
-    }
-
-    // ===== فتح محادثة =====
-    async function openChat(friendId, friendUsername) {
-        currentFriend = { id: friendId, username: friendUsername };
-        localStorage.setItem('currentFriend', JSON.stringify(currentFriend));
-        console.log("تم فتح محادثة مع:", friendUsername);
-        document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
-        document.getElementById(`friend-${friendId}`)?.classList.add('active');
-        document.getElementById('welcomeScreen').style.display = 'none';
-        document.getElementById('chatHeader').style.display = 'flex';
-        document.getElementById('messages').style.display = 'flex';
-        document.getElementById('inputArea').style.display = 'flex';
-        document.getElementById('friendName').textContent = friendUsername;
-        document.getElementById('friendAvatar').textContent = friendUsername[0].toUpperCase();
-        if (window.innerWidth <= 600) document.getElementById('sidebar').classList.add('hidden');
-        await loadMessages();
-        document.getElementById('msgInput').focus();
-    }
-
-    // ===== جلب الرسائل =====
-    async function loadMessages() {
-        if (!currentFriend || !currentFriend.id);
-        console.log("لا يوجد صديق محدد حالياً لجلب الرسائل");
-        return;
-        try {
-            console.log(`جاري طلب الرسائل للصديق رقم: ${currentFriend.id}`);
-            const res = await fetch(`${API_URL}/messages/${currentFriend.id}`, { headers: { 'authorization': token } });
-            if (!res.ok) {
-            console.error("السيرفر رفض الطلب، تأكد من الـ Token أو المسار");
+        if (!Array.isArray(list) || !list.length) {
+            el.innerHTML = '<div class="empty-hint">لا يوجد أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>';
             return;
         }
-            const msgs = await res.json();
-            console.log("الرسائل المستلمة:", msgs);
-            const container = document.getElementById('messages');
-            if (!container) return;
-            container.innerHTML = '';
-            if (Array.isArray(msgs)) {
-            msgs.forEach(m => appendMessage(m, false));
+
+        el.innerHTML = list.map(f => `
+            <div class="f-item" id="fi-${f.id}" onclick="openChat(${f.id},'${f.username}')">
+                <div class="avatar sm">${f.username[0].toUpperCase()}</div>
+                <div class="f-name">${f.username}</div>
+                <div class="unread-dot" id="dot-${f.id}"></div>
+            </div>
+        `).join('');
+
+        // استعادة المحادثة المحفوظة
+        const saved = localStorage.getItem('cf');
+        if (saved) {
+            const cf = JSON.parse(saved);
+            // تأكد ما زال صديق
+            if (list.find(f => f.id == cf.id)) openChat(cf.id, cf.username);
         }
-            msgs.forEach(m => appendMessage(m, false));
-            container.scrollTop = container.scrollHeight;
-        } catch { console.error('خطأ'); }
-    }
+    } catch (e) { console.error('loadFriends:', e); }
+}
 
-    // ===== إضافة رسالة =====
-    function appendMessage(msg, scroll = true) {
-        const container = document.getElementById('messages');
-        const isMine = msg.sender_id == myId;
-        const time = new Date(msg.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
-        const seen = isMine && msg.is_seen ? '<span class="seen-icon">✓✓</span>' : '';
+// ─── Requests ───────────────────────────────────────────────
+async function loadRequests() {
+    try {
+        const res  = await fetch(`${API}/friends/requests`, { headers: { authorization: token } });
+        const list = await res.json();
+        const badge = document.getElementById('reqBadge');
 
-        const wrapper = document.createElement('div');
-        wrapper.className = `msg-wrapper ${isMine ? 'mine' : 'other'}`;
-        wrapper.id = `msg-${msg.id}`;
-        wrapper.innerHTML = `
-            <div class="message">
-                ${msg.content}
-                <button class="delete-btn" onclick="deleteMessage(${msg.id})">✕</button>
+        if (list.length) {
+            badge.style.display = 'flex';
+            badge.textContent   = list.length;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const el = document.getElementById('reqList');
+        if (!list.length) { el.innerHTML = '<div class="empty-hint">لا توجد طلبات</div>'; return; }
+
+        el.innerHTML = list.map(r => `
+            <div class="req-item" id="ri-${r.id}">
+                <div class="avatar sm">${r.username[0].toUpperCase()}</div>
+                <span>${r.username}</span>
+                <div class="req-btns">
+                    <button class="acc-btn" onclick="respond(${r.id},'accepted')">قبول</button>
+                    <button class="rej-btn" onclick="respond(${r.id},'rejected')">رفض</button>
+                </div>
             </div>
-            <div class="msg-meta">
-                <span class="msg-time">${time}</span>
-                ${seen}
+        `).join('');
+    } catch (e) { console.error('loadRequests:', e); }
+}
+
+async function respond(reqId, action) {
+    try {
+        await fetch(`${API}/friends/respond`, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', authorization: token },
+            body: JSON.stringify({ request_id: reqId, action })
+        });
+        document.getElementById(`ri-${reqId}`)?.remove();
+        if (action === 'accepted') { loadFriends(); showToast('تمت الإضافة! 🎉'); }
+        loadRequests();
+    } catch (e) { console.error('respond:', e); }
+}
+
+// ─── Search ─────────────────────────────────────────────────
+let searchTimer;
+function doSearch() {
+    clearTimeout(searchTimer);
+    const q = document.getElementById('searchBox').value.trim();
+    if (!q) { document.getElementById('searchResults').innerHTML = ''; return; }
+    searchTimer = setTimeout(() => runSearch(q), 400);
+}
+
+async function runSearch(q) {
+    try {
+        const res  = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: { authorization: token } });
+        const list = await res.json();
+        const el   = document.getElementById('searchResults');
+        if (!list.length) { el.innerHTML = '<div class="empty-hint">لا يوجد نتائج</div>'; return; }
+        el.innerHTML = list.map(u => `
+            <div class="s-item">
+                <div class="avatar sm">${u.username[0].toUpperCase()}</div>
+                <span>${u.username}</span>
+                <button class="add-btn" id="ab-${u.id}" onclick="sendReq(${u.id})">إضافة</button>
             </div>
-        `;
-        container.appendChild(wrapper);
-        if (scroll) container.scrollTop = container.scrollHeight;
-    }
+        `).join('');
+    } catch (e) { console.error('search:', e); }
+}
 
-    // ===== إرسال رسالة =====
-    function sendMessage() {
-        const input = document.getElementById('msgInput');
-        const content = input.value.trim();
-        if (!content || !currentFriend) return;
-        input.value = '';
-        socket.emit('send_message', { sender_id: myId, receiver_id: currentFriend.id, content });
-    }
+async function sendReq(friendId) {
+    const btn = document.getElementById(`ab-${friendId}`);
+    if (btn) { btn.disabled = true; btn.textContent = 'تم ✓'; }
+    try {
+        const res  = await fetch(`${API}/friends/request`, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', authorization: token },
+            body: JSON.stringify({ receiver_id: friendId })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'خطأ');
+            if (btn) { btn.disabled = false; btn.textContent = 'إضافة'; }
+        } else {
+            showToast('تم إرسال طلب الصداقة ✅');
+        }
+    } catch (e) { console.error('sendReq:', e); }
+}
 
-    // ===== حذف رسالة =====
-    async function deleteMessage(id) {
-        try {
-            await fetch(`${API_URL}/message/${id}`, { method: 'DELETE', headers: { 'authorization': token } });
-            document.getElementById(`msg-${id}`)?.remove();
-        } catch { console.error('خطأ'); }
-    }
+// ─── Open Chat ──────────────────────────────────────────────
+async function openChat(friendId, friendUsername) {
+    currentFriend = { id: friendId, username: friendUsername };
+    localStorage.setItem('cf', JSON.stringify(currentFriend));
 
-    // ===== Panels =====
-    function togglePanel(panelId) {
-        const panel = document.getElementById(panelId);
-        panel.classList.toggle('open');
-        if (panelId === 'requestsPanel' && panel.classList.contains('open')) loadFriendRequests();
-    }
+    // تحديث sidebar
+    document.querySelectorAll('.f-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`fi-${friendId}`)?.classList.add('active');
+    const dot = document.getElementById(`dot-${friendId}`);
+    if (dot) dot.style.display = 'none';
 
-    // ===== Toast =====
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+    // إظهار chat
+    document.getElementById('welcome').style.display   = 'none';
+    document.getElementById('chatHead').style.display  = 'flex';
+    document.getElementById('msgs').style.display      = 'flex';
+    document.getElementById('inputBar').style.display  = 'flex';
+    document.getElementById('chatName').textContent    = friendUsername;
+    document.getElementById('chatAvatar').textContent  = friendUsername[0].toUpperCase();
 
-    // ===== خروج =====
-    function logout() {
-        localStorage.removeItem('token');
-        window.location.href = 'login.html';
-    }
+    if (window.innerWidth <= 600)
+        document.getElementById('sidebar').classList.add('hidden');
 
-    function showSidebar() {
-        document.getElementById('sidebar').classList.remove('hidden');
-    }
+    await loadMsgs();
+    document.getElementById('msgInput').focus();
+}
 
-    // ===== تشغيل =====
-  connectSocket();
-loadFriendRequests();
-loadFriends().then(() => {
-    const saved = localStorage.getItem('currentFriend');
-    if (saved) {
-        const f = JSON.parse(saved);
-        openChat(f.id, f.username);
-    }
-});
+// ─── Load Messages ──────────────────────────────────────────
+async function loadMsgs() {
+    if (!currentFriend) return;
+    try {
+        const res  = await fetch(`${API}/messages/${currentFriend.id}`, { headers: { authorization: token } });
+        const list = await res.json();
+        const el   = document.getElementById('msgs');
+        el.innerHTML = '';
+        list.forEach(m => appendMsg(m, false));
+        el.scrollTop = el.scrollHeight;
+    } catch (e) { console.error('loadMsgs:', e); }
+}
+
+// ─── Append Message ─────────────────────────────────────────
+function appendMsg(msg, scroll = true) {
+    const el     = document.getElementById('msgs');
+    const isMine = msg.sender_id == myId;
+    const time   = new Date(msg.created_at).toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+    const seen   = isMine ? `<span class="seen">${msg.is_seen ? '✓✓' : '✓'}</span>` : '';
+
+    const div = document.createElement('div');
+    div.className = `mw ${isMine ? 'mine' : 'other'}`;
+    div.id        = `mw-${msg.id}`;
+    div.innerHTML = `
+        <div class="bubble">
+            ${msg.content}
+            <button class="del-btn" onclick="delMsg(${msg.id})">✕</button>
+        </div>
+        <div class="meta">
+            <span class="time">${time}</span>
+            ${seen}
+        </div>
+    `;
+    el.appendChild(div);
+    if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+// ─── Send Message ────────────────────────────────────────────
+function sendMsg() {
+    const input   = document.getElementById('msgInput');
+    const content = input.value.trim();
+    if (!content || !currentFriend) return;
+    input.value = '';
+    socket.emit('send_message', {
+        sender_id  : myId,
+        receiver_id: currentFriend.id,
+        content
+    });
+}
+
+// ─── Delete Message ──────────────────────────────────────────
+async function delMsg(id) {
+    try {
+        await fetch(`${API}/messages/${id}`, {
+            method:'DELETE',
+            headers:{ authorization: token }
+        });
+        document.getElementById(`mw-${id}`)?.remove();
+    } catch (e) { console.error('delMsg:', e); }
+}
+
+// ─── Panels ─────────────────────────────────────────────────
+function openPanel(id) {
+    document.getElementById(id).classList.add('open');
+    if (id === 'reqPanel') loadRequests();
+}
+function closePanel(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+// ─── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── Misc ────────────────────────────────────────────────────
+function showSidebar() { document.getElementById('sidebar').classList.remove('hidden'); }
+function logout() { localStorage.clear(); location.href = 'login.html'; }
+
+// ─── Start ───────────────────────────────────────────────────
+initSocket();
+loadFriends();
+loadRequests();
 </script>
 </body>
 </html>
