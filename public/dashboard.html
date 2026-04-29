@@ -182,6 +182,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+     let currentFriend = null;
+    let token = localStorage.getItem('token');
+    let socket = null;
     const API_URL = 'https://linkpad-chat.onrender.com';
     
     if (!token) window.location.href = 'login.html';
@@ -193,10 +196,8 @@
         myName = payload.username;
         document.getElementById('my-name').textContent = myName;
     } catch { window.location.href = 'login.html'; }
-
-    let currentFriend = null;
-    let token = localStorage.getItem('token');
-    let socket = null;
+    
+   
 
     // ===== Socket.io =====
     function connectSocket() {
