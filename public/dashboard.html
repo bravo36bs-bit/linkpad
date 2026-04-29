@@ -551,7 +551,7 @@ async function sendReq(friendId) {
         const res  = await fetch(`${API}/friends/request`, {
             method:'POST',
             headers:{ 'Content-Type':'application/json', authorization: token },
-            body: JSON.stringify({ receiver_id: friendId })
+            body: JSON.stringify({ receiver_id: parseInt(friendId) })
         });
         const data = await res.json();
         if (!res.ok) {
