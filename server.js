@@ -69,13 +69,7 @@ function verifyToken(req, res, next) {
         res.status(401).json({ error: 'توكن غير صالح' });
     }
 }
-app.get('/clear-db', (req, res) => {
-    db.query('DELETE FROM users', () => {
-        db.query('DELETE FROM messages', () => {
-            res.json({ success: true, message: 'تم المسح!' });
-        });
-    });
-});
+
 
 // ===== المسارات =====
 
