@@ -12,7 +12,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const SECRET_KEY = process.env.JWT_SECRET;
 
@@ -69,7 +69,9 @@ function verifyToken(req, res, next) {
 }
 
 // ===== المسارات =====
-app.get('/', (req, res) => res.send("LinkPad Server Active! ✅"));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 app.get('/status', (req, res) => res.json({ status: 'ok' }));
 
 // تسجيل حساب جديد
