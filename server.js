@@ -151,7 +151,7 @@ app.get('/search', auth, async (req, res) => {
 
 // ── إرسال طلب صداقة ───────────────────────────────────────────
 app.post('/friends/request', auth, async (req, res) => {
-    const senderId   = req.user.id;
+    const senderId = parseInt(req.user.id);
     const receiverId = parseInt(req.body.receiver_id);
 
     if (!receiverId || receiverId === senderId)
