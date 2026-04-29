@@ -1,270 +1,361 @@
-const express = require('express');
-const mysql = require('mysql2');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const http = require('http');
-const path = require('path');
+const express  = require('express');
+const mysql    = require('mysql2');
+const cors     = require('cors');
+const jwt      = require('jsonwebtoken');
+const http     = require('http');
 const { Server } = require('socket.io');
 
-const app = express();
+const app    = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+const io     = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-const SECRET_KEY = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET;
 
+// ─── قاعدة البيانات ───────────────────────────────────────────
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
+    host    : process.env.DB_HOST,
+    user    : process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: 'defaultdb',
-    port: process.env.DB_PORT || 12345,
-    ssl: { rejectUnauthorized: false }
+    port    : process.env.DB_PORT || 3306,
+    ssl     : { rejectUnauthorized: false }
 });
 
-db.connect((err) => {
-    if (err) { console.error('خطأ:', err.message); return; }
-    console.log('متصل بقاعدة البيانات ✅');
-
-    db.query(`CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    db.query(`CREATE TABLE IF NOT EXISTS friends (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        friend_id INT NOT NULL,
-        status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (friend_id) REFERENCES users(id)
-    )`);
-
-    db.query(`CREATE TABLE IF NOT EXISTS messages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        sender_id INT NOT NULL,
-        receiver_id INT NOT NULL,
-        content TEXT NOT NULL,
-        is_seen TINYINT DEFAULT 0,
-        deleted_by_sender TINYINT DEFAULT 0,
-        deleted_by_receiver TINYINT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
+db.connect(err => {
+    if (err) { console.error('DB Error:', err.message); return; }
+    console.log('Connected to DB ✅');
+    initTables();
 });
 
-// ===== Middleware =====
-function verifyToken(req, res, next) {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(401).json({ error: 'لا يوجد توكن' });
-    try {
-        req.user = jwt.verify(token, SECRET_KEY);
-        next();
-    } catch { res.status(401).json({ error: 'توكن غير صالح' }); }
+function initTables() {
+    db.query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id         INT AUTO_INCREMENT PRIMARY KEY,
+            username   VARCHAR(50) UNIQUE NOT NULL,
+            password   VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.query(`
+        CREATE TABLE IF NOT EXISTS friends (
+            id        INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id INT NOT NULL,
+            receiver_id INT NOT NULL,
+            status    ENUM('pending','accepted','rejected') DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_pair (sender_id, receiver_id),
+            FOREIGN KEY (sender_id)   REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+
+    db.query(`
+        CREATE TABLE IF NOT EXISTS messages (
+            id          INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id   INT NOT NULL,
+            receiver_id INT NOT NULL,
+            content     TEXT NOT NULL,
+            is_seen     TINYINT DEFAULT 0,
+            deleted_by_sender   TINYINT DEFAULT 0,
+            deleted_by_receiver TINYINT DEFAULT 0,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sender_id)   REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
 }
 
-// ===== المسارات =====
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-app.get('/status', (req, res) => res.json({ status: 'ok' }));
+// ─── Middleware ────────────────────────────────────────────────
+function auth(req, res, next) {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(401).json({ error: 'غير مصرح' });
+    try {
+        req.user = jwt.verify(token, SECRET);
+        next();
+    } catch {
+        res.status(401).json({ error: 'توكن غير صالح' });
+    }
+}
 
-// تسجيل حساب جديد
-app.post('/signup', (req, res) => {
+// ─── Helper ───────────────────────────────────────────────────
+function query(sql, params) {
+    return new Promise((resolve, reject) => {
+        db.query(sql, params, (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  المسارات
+// ═══════════════════════════════════════════════════════════════
+
+app.get('/',       (_, res) => res.send('Falcon Meet Server Active ✅'));
+app.get('/status', (_, res) => res.json({ status: 'ok' }));
+
+// ── تسجيل حساب ────────────────────────────────────────────────
+app.post('/signup', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password)
         return res.status(400).json({ error: 'اسم المستخدم وكلمة السر مطلوبان' });
+    if (username.length < 3)
+        return res.status(400).json({ error: 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل' });
+    if (password.length < 4)
+        return res.status(400).json({ error: 'كلمة السر يجب أن تكون 4 أحرف على الأقل' });
+    try {
+        await query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password]);
+        res.json({ success: true });
+    } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY')
+            return res.status(400).json({ error: 'اسم المستخدم مستخدم مسبقاً' });
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
 
-    db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password], (err) => {
-        if (err) {
-            if (err.code === 'ER_DUP_ENTRY')
-                return res.status(400).json({ error: 'اسم المستخدم مستخدم مسبقاً' });
-            return res.status(500).json({ error: 'خطأ بالسيرفر' });
+// ── تسجيل الدخول ──────────────────────────────────────────────
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password)
+        return res.status(400).json({ error: 'اسم المستخدم وكلمة السر مطلوبان' });
+    try {
+        const rows = await query('SELECT id, username FROM users WHERE username=? AND password=?', [username, password]);
+        if (!rows.length)
+            return res.status(401).json({ error: 'اسم المستخدم أو كلمة السر خاطئة' });
+        const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, SECRET, { expiresIn: '7d' });
+        res.json({ token });
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
+
+// ── البحث عن مستخدم ───────────────────────────────────────────
+app.get('/search', auth, async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+    try {
+        const rows = await query(
+            'SELECT id, username FROM users WHERE username LIKE ? AND id != ? LIMIT 10',
+            [`%${q}%`, req.user.id]
+        );
+        res.json(rows);
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
+
+// ── إرسال طلب صداقة ───────────────────────────────────────────
+app.post('/friends/request', auth, async (req, res) => {
+    const senderId   = req.user.id;
+    const receiverId = parseInt(req.body.receiver_id);
+
+    if (!receiverId || receiverId === senderId)
+        return res.status(400).json({ error: 'معرف غير صالح' });
+
+    try {
+        // تحقق ما في علاقة موجودة بأي اتجاه
+        const existing = await query(
+            `SELECT id FROM friends
+             WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?)`,
+            [senderId, receiverId, receiverId, senderId]
+        );
+        if (existing.length)
+            return res.status(400).json({ error: 'طلب صداقة موجود مسبقاً أو أنتم أصدقاء' });
+
+        await query('INSERT INTO friends (sender_id, receiver_id) VALUES (?, ?)', [senderId, receiverId]);
+
+        // إشعار فوري إن كان متصل
+        const sock = onlineUsers[receiverId];
+        if (sock) {
+            io.to(sock).emit('friend_request', { from_id: senderId, from_username: req.user.username });
         }
         res.json({ success: true });
-    });
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
 });
 
-// تسجيل الدخول
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password)
-        return res.status(400).json({ error: 'اسم المستخدم وكلمة السر مطلوبان' });
-
-    db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
-        if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-        if (results && results.length > 0) {
-            const token = jwt.sign(
-                { id: results[0].id, username: results[0].username },
-                SECRET_KEY,
-                { expiresIn: '7d' }
-            );
-            res.json({ token });
-        } else {
-            res.status(401).json({ error: 'خطأ في اسم المستخدم أو كلمة السر' });
-        }
-    });
-});
-
-// البحث عن مستخدم
-app.get('/search/:username', verifyToken, (req, res) => {
-    const { username } = req.params;
-    db.query(
-        'SELECT id, username FROM users WHERE username LIKE ? AND id != ?',
-        [`%${username}%`, req.user.id],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-            res.json(results);
-        }
-    );
-});
-
-// إرسال طلب صداقة
-app.post('/friend-request', verifyToken, (req, res) => {
-    const { friend_id } = req.body;
-    const user_id = req.user.id;
-
-    db.query(
-        'SELECT * FROM friends WHERE (user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)',
-        [user_id, friend_id, friend_id, user_id],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-            if (results.length > 0)
-                return res.status(400).json({ error: 'طلب صداقة موجود مسبقاً' });
-
-            db.query('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)', [user_id, friend_id], (err) => {
-                if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-                const receiverSocket = onlineUsers[friend_id];
-                if (receiverSocket) {
-                    io.to(receiverSocket).emit('friend_request', {
-                        from_id: user_id,
-                        from_username: req.user.username
-                    });
-                }
-                res.json({ success: true });
-            });
-        }
-    );
-});
-
-// جلب طلبات الصداقة الواردة
-app.get('/friend-requests', verifyToken, (req, res) => {
-    db.query(
-        `SELECT friends.id, users.id as user_id, users.username 
-         FROM friends JOIN users ON friends.user_id = users.id 
-         WHERE friends.friend_id = ? AND friends.status = 'pending'`,
-        [req.user.id],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-            res.json(results);
-        }
-    );
-});
-
-// قبول أو رفض طلب صداقة
-app.post('/friend-response', verifyToken, (req, res) => {
+// ── الرد على طلب صداقة ────────────────────────────────────────
+app.post('/friends/respond', auth, async (req, res) => {
     const { request_id, action } = req.body;
-    db.query(
-        'UPDATE friends SET status = ? WHERE id = ? AND friend_id = ?',
-        [action, request_id, req.user.id],
-        (err) => {
-            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-            res.json({ success: true });
-        }
-    );
-});
+    if (!['accepted', 'rejected'].includes(action))
+        return res.status(400).json({ error: 'إجراء غير صالح' });
+    try {
+        const result = await query(
+            'UPDATE friends SET status=? WHERE id=? AND receiver_id=? AND status="pending"',
+            [action, request_id, req.user.id]
+        );
+        if (!result.affectedRows)
+            return res.status(404).json({ error: 'الطلب غير موجود' });
 
-// جلب الأصدقاء المقبولين
-app.get('/friends', verifyToken, (req, res) => {
-    const myId = req.user.id;
-    db.query(
-        `SELECT users.id, users.username FROM friends 
-         JOIN users ON (
-             (friends.user_id = ? AND friends.friend_id = users.id) OR
-             (friends.friend_id = ? AND friends.user_id = users.id)
-         )
-         WHERE (friends.user_id = ? OR friends.friend_id = ?) 
-         AND friends.status = 'accepted'`,
-        [myId, myId, myId, myId],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-            res.json(results);
+        if (action === 'accepted') {
+            // إشعار للمرسل
+            const req_row = await query('SELECT sender_id FROM friends WHERE id=?', [request_id]);
+            if (req_row.length) {
+                const sock = onlineUsers[req_row[0].sender_id];
+                if (sock) io.to(sock).emit('friend_accepted', { by_username: req.user.username });
+            }
         }
-    );
-});
-
-// جلب الرسائل بين شخصين
-app.get('/messages/:friendId', verifyToken, (req, res) => {
-    const myId = req.user.id;
-    const { friendId } = req.params;
-    const q = `SELECT * FROM messages 
-               WHERE ((sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?))
-               AND NOT (sender_id=? AND deleted_by_sender=1)
-               AND NOT (receiver_id=? AND deleted_by_receiver=1)
-               ORDER BY id ASC`;
-    db.query(q, [myId, friendId, friendId, myId, myId, myId], (err, results) => {
-        if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-        db.query('UPDATE messages SET is_seen = 1 WHERE sender_id = ? AND receiver_id = ? AND is_seen = 0', [friendId, myId]);
-        res.json(results);
-    });
-});
-
-// حذف رسالة
-app.delete('/message/:id', verifyToken, (req, res) => {
-    const myId = req.user.id;
-    const { id } = req.params;
-    db.query('SELECT * FROM messages WHERE id = ?', [id], (err, results) => {
-        if (err || !results.length) return res.status(404).json({ error: 'الرسالة غير موجودة' });
-        const msg = results[0];
-        if (msg.sender_id == myId) {
-            db.query('UPDATE messages SET deleted_by_sender = 1 WHERE id = ?', [id]);
-        } else if (msg.receiver_id == myId) {
-            db.query('UPDATE messages SET deleted_by_receiver = 1 WHERE id = ?', [id]);
-        }
-        const otherId = msg.sender_id == myId ? msg.receiver_id : msg.sender_id;
-        const otherSocket = onlineUsers[otherId];
-        if (otherSocket) io.to(otherSocket).emit('message_deleted', { id });
         res.json({ success: true });
-    });
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
 });
 
-// ===== Socket.io =====
-const onlineUsers = {};
+// ── جلب طلبات الصداقة الواردة ─────────────────────────────────
+app.get('/friends/requests', auth, async (req, res) => {
+    try {
+        const rows = await query(
+            `SELECT f.id, u.id as user_id, u.username
+             FROM friends f
+             JOIN users u ON u.id = f.sender_id
+             WHERE f.receiver_id=? AND f.status='pending'`,
+            [req.user.id]
+        );
+        res.json(rows);
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
 
-io.on('connection', (socket) => {
-    socket.on('register', (userId) => {
+// ── جلب قائمة الأصدقاء ────────────────────────────────────────
+app.get('/friends', auth, async (req, res) => {
+    const myId = req.user.id;
+    try {
+        const rows = await query(
+            `SELECT
+                u.id,
+                u.username
+             FROM friends f
+             JOIN users u ON u.id = IF(f.sender_id = ?, f.receiver_id, f.sender_id)
+             WHERE (f.sender_id = ? OR f.receiver_id = ?)
+               AND f.status = 'accepted'`,
+            [myId, myId, myId]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error('friends error:', err);
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
+
+// ── جلب الرسائل بين شخصين ─────────────────────────────────────
+app.get('/messages/:friendId', auth, async (req, res) => {
+    const myId     = req.user.id;
+    const friendId = parseInt(req.params.friendId);
+
+    try {
+        const rows = await query(
+            `SELECT id, sender_id, receiver_id, content, is_seen, created_at
+             FROM messages
+             WHERE ((sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?))
+               AND NOT (sender_id=?   AND deleted_by_sender=1)
+               AND NOT (receiver_id=? AND deleted_by_receiver=1)
+             ORDER BY id ASC`,
+            [myId, friendId, friendId, myId, myId, myId]
+        );
+
+        // علّم الرسائل الواردة كـ seen
+        await query(
+            'UPDATE messages SET is_seen=1 WHERE sender_id=? AND receiver_id=? AND is_seen=0',
+            [friendId, myId]
+        );
+
+        // أشعر المُرسل إن رسائله اتقرأت
+        const sock = onlineUsers[friendId];
+        if (sock) io.to(sock).emit('messages_seen', { by: myId });
+
+        res.json(rows);
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
+
+// ── حذف رسالة ─────────────────────────────────────────────────
+app.delete('/messages/:id', auth, async (req, res) => {
+    const myId = req.user.id;
+    const msgId = parseInt(req.params.id);
+    try {
+        const rows = await query('SELECT * FROM messages WHERE id=?', [msgId]);
+        if (!rows.length) return res.status(404).json({ error: 'الرسالة غير موجودة' });
+
+        const msg = rows[0];
+        if (msg.sender_id === myId) {
+            await query('UPDATE messages SET deleted_by_sender=1 WHERE id=?', [msgId]);
+        } else if (msg.receiver_id === myId) {
+            await query('UPDATE messages SET deleted_by_receiver=1 WHERE id=?', [msgId]);
+        } else {
+            return res.status(403).json({ error: 'غير مصرح' });
+        }
+
+        // إشعار الطرف الآخر
+        const otherId = msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
+        const sock    = onlineUsers[otherId];
+        if (sock) io.to(sock).emit('message_deleted', { id: msgId });
+
+        res.json({ success: true });
+    } catch {
+        res.status(500).json({ error: 'خطأ بالسيرفر' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Socket.io
+// ═══════════════════════════════════════════════════════════════
+const onlineUsers = {}; // { userId: socketId }
+
+io.on('connection', socket => {
+
+    socket.on('register', userId => {
         onlineUsers[userId] = socket.id;
     });
 
-    socket.on('send_message', (data) => {
+    socket.on('send_message', async data => {
         const { sender_id, receiver_id, content } = data;
-        db.query(
-            'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)',
-            [sender_id, receiver_id, content],
-            (err, result) => {
-                if (err) return;
-                const message = { id: result.insertId, sender_id, receiver_id, content, is_seen: 0, created_at: new Date() };
-                socket.emit('receive_message', message);
-                const receiverSocket = onlineUsers[receiver_id];
-                if (receiverSocket) io.to(receiverSocket).emit('receive_message', message);
+        if (!sender_id || !receiver_id || !content) return;
+
+        try {
+            const result = await query(
+                'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)',
+                [sender_id, receiver_id, content]
+            );
+            const message = {
+                id         : result.insertId,
+                sender_id,
+                receiver_id,
+                content,
+                is_seen    : 0,
+                created_at : new Date()
+            };
+
+            // أرسل للمرسل فقط تأكيد
+            socket.emit('receive_message', message);
+
+            // أرسل للمستقبل فقط إن كان متصل
+            const receiverSock = onlineUsers[receiver_id];
+            if (receiverSock) {
+                io.to(receiverSock).emit('receive_message', message);
             }
-        );
+        } catch (err) {
+            console.error('send_message error:', err);
+        }
     });
 
     socket.on('disconnect', () => {
-        for (const userId in onlineUsers) {
-            if (onlineUsers[userId] === socket.id) {
-                delete onlineUsers[userId];
+        for (const uid in onlineUsers) {
+            if (onlineUsers[uid] === socket.id) {
+                delete onlineUsers[uid];
                 break;
             }
         }
     });
 });
 
+// ─── تشغيل ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`السيرفر يعمل على البورت ${PORT} ✅`));
+server.listen(PORT, () => console.log(`Falcon Meet running on port ${PORT} ✅`));
