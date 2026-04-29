@@ -182,8 +182,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-     let currentFriend = null;
-    let token = localStorage.getItem('token');
+     let token = localStorage.getItem('token');
+let currentFriend = null;
+    
     let socket = null;
     const API_URL = 'https://linkpad-chat.onrender.com';
     
@@ -329,6 +330,7 @@
     // ===== فتح محادثة =====
     async function openChat(friendId, friendUsername) {
         currentFriend = { id: friendId, username: friendUsername };
+        localStorage.setItem('currentFriend', JSON.stringify(currentFriend));
         console.log("تم فتح محادثة مع:", friendUsername);
         document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
         document.getElementById(`friend-${friendId}`)?.classList.add('active');
@@ -436,6 +438,11 @@
 
     // ===== تشغيل =====
     connectSocket();
+    const saved = localStorage.getItem('currentFriend');
+if (saved) {
+    const f = JSON.parse(saved);
+    openChat(f.id, f.username);
+}
     loadFriends();
     loadFriendRequests();
 </script>
