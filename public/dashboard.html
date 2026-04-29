@@ -183,7 +183,7 @@
 
 <script>
     const API_URL = 'https://linkpad-chat.onrender.com';
-    const token = localStorage.getItem('token');
+    
     if (!token) window.location.href = 'login.html';
 
     let myId, myName;
@@ -195,6 +195,7 @@
     } catch { window.location.href = 'login.html'; }
 
     let currentFriend = null;
+    let token = localStorage.getItem('token');
     let socket = null;
 
     // ===== Socket.io =====
@@ -327,6 +328,7 @@
     // ===== فتح محادثة =====
     async function openChat(friendId, friendUsername) {
         currentFriend = { id: friendId, username: friendUsername };
+        console.log("تم فتح محادثة مع:", friendUsername);
         document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
         document.getElementById(`friend-${friendId}`)?.classList.add('active');
         document.getElementById('welcomeScreen').style.display = 'none';
@@ -342,12 +344,24 @@
 
     // ===== جلب الرسائل =====
     async function loadMessages() {
-        if (!currentFriend) return;
+        if (!currentFriend || !currentFriend.id);
+        console.log("لا يوجد صديق محدد حالياً لجلب الرسائل");
+        return;
         try {
+            console.log(`جاري طلب الرسائل للصديق رقم: ${currentFriend.id}`);
             const res = await fetch(`${API_URL}/messages/${currentFriend.id}`, { headers: { 'authorization': token } });
+            if (!res.ok) {
+            console.error("السيرفر رفض الطلب، تأكد من الـ Token أو المسار");
+            return;
+        }
             const msgs = await res.json();
+            console.log("الرسائل المستلمة:", msgs);
             const container = document.getElementById('messages');
+            if (!container) return;
             container.innerHTML = '';
+            if (Array.isArray(msgs)) {
+            msgs.forEach(m => appendMessage(m, false));
+        }
             msgs.forEach(m => appendMessage(m, false));
             container.scrollTop = container.scrollHeight;
         } catch { console.error('خطأ'); }
