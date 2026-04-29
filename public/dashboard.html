@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>LinkPad - دردشة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        :root {
+            --teal: #008080;
+            --teal-dark: #005f5f;
+            --teal-light: #00b3b3;
+            --bg: #0a0f0f;
+            --card: #111a1a;
+            --card2: #0d1515;
+            --border: #1a2e2e;
+            --text: #e8f4f4;
+            --muted: #5a8a8a;
+            --online: #00e676;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ===== القائمة الجانبية ===== */
+        .sidebar {
+            width: 280px;
+            background: var(--card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--teal-light);
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+
+        .my-info {
+            padding: 15px 20px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .my-info span { color: var(--teal-light); font-weight: 700; }
+
+        .users-title {
+            padding: 15px 20px 10px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .users-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 10px;
+        }
+
+        .users-list::-webkit-scrollbar { width: 4px; }
+        .users-list::-webkit-scrollbar-track { background: transparent; }
+        .users-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+        }
+        .user-item:hover { background: var(--card2); }
+        .user-item.active { background: rgba(0,128,128,0.15); border: 1px solid rgba(0,128,128,0.3); }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--teal-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .user-name { font-size: 0.95rem; font-weight: 500; }
+
+        .unread-badge {
+            margin-right: auto;
+            background: var(--teal);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: none;
+        }
+
+        .empty-users {
+            text-align: center;
+            color: var(--muted);
+            padding: 30px;
+            font-size: 0.9rem;
+        }
+
+        /* ===== منطقة الدردشة ===== */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* شاشة الترحيب */
+        .welcome-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            gap: 15px;
+        }
+        .welcome-screen .icon { font-size: 4rem; }
+        .welcome-screen h3 { font-size: 1.2rem; color: var(--text); }
+        .welcome-screen p { font-size: 0.9rem; }
+
+        /* رأس الدردشة */
+        .chat-header {
+            padding: 18px 20px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            display: none;
+        }
+
+        .chat-header .avatar { width: 38px; height: 38px; font-size: 0.95rem; }
+        .chat-header-name { font-weight: 700; font-size: 1rem; }
+
+        /* الرسائل */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            display: none;
+        }
+
+        .messages::-webkit-scrollbar { width: 4px; }
+        .messages::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: msgIn 0.2s ease;
+            word-break: break-word;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.mine {
+            align-self: flex-start;
+            background: var(--teal);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.other {
+            align-self: flex-end;
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: left;
+        }
+
+        /* حقل الإرسال */
+        .input-area {
+            padding: 15px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            display: none;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 13px 18px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            color: var(--text);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-area input:focus { border-color: var(--teal); }
+        .input-area input::placeholder { color: #2a4a4a; }
+
+        .send-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--teal);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { background: var(--teal-light); transform: scale(1.05); }
+
+        /* موبايل */
+        @media (max-width: 600px) {
+            .sidebar {
+                position: fixed;
+                top: 0; right: 0;
+                height: 100%;
+                z-index: 100;
+                transform: translateX(0);
+            }
+            .sidebar.hidden { transform: translateX(100%); }
+            .chat-area { width: 100%; }
+            .back-btn { display: flex !important; }
+        }
+
+        .back-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- القائمة الجانبية -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>LinkPad</h2>
+        <button class="logout-btn" onclick="logout()">خروج</button>
+    </div>
+    <div class="my-info">مرحباً، <span id="my-name">...</span></div>
+    <div class="users-title">المستخدمون</div>
+    <div class="users-list" id="usersList">
+        <div class="empty-users">جاري التحميل...</div>
+    </div>
+</div>
+
+<!-- منطقة الدردشة -->
+<div class="chat-area">
+    <!-- شاشة الترحيب -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="icon">💬</div>
+        <h3>اختر شخصاً للدردشة</h3>
+        <p>اختر من القائمة على اليمين للبدء</p>
+    </div>
+
+    <!-- رأس الدردشة -->
+    <div class="chat-header" id="chatHeader">
+        <button class="back-btn" onclick="showSidebar()">→</button>
+        <div class="avatar" id="friendAvatar"></div>
+        <div class="chat-header-name" id="friendName"></div>
+    </div>
+
+    <!-- الرسائل -->
+    <div class="messages" id="messages"></div>
+
+    <!-- حقل الإرسال -->
+    <div class="input-area" id="inputArea">
+        <input id="msgInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button class="send-btn" onclick="sendMessage()">↑</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://linkpad-chat.onrender.com';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    // فك التوكن
+    let myId, myName;
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        myId = payload.id;
+        myName = payload.username;
+        document.getElementById('my-name').textContent = myName;
+    } catch { window.location.href = 'login.html'; }
+
+    let currentFriend = null;
+    let socket = null;
+
+    // ===== Socket.io =====
+    function connectSocket() {
+        socket = io(API_URL);
+        socket.on('connect', () => {
+            socket.emit('register', myId);
+        });
+        socket.on('receive_message', (msg) => {
+            if (
+                currentFriend &&
+                (msg.sender_id == currentFriend.id || msg.receiver_id == currentFriend.id)
+            ) {
+                appendMessage(msg);
+            }
+        });
+    }
+
+    // ===== جلب المستخدمين =====
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API_URL}/users`, {
+                headers: { 'authorization': token }
+            });
+            const users = await res.json();
+            const list = document.getElementById('usersList');
+
+            if (!users.length) {
+                list.innerHTML = '<div class="empty-users">لا يوجد مستخدمون آخرون بعد</div>';
+                return;
+            }
+
+            list.innerHTML = users.map(u => `
+                <div class="user-item" id="user-${u.id}" onclick="openChat(${u.id}, '${u.username}')">
+                    <div class="avatar">${u.username[0].toUpperCase()}</div>
+                    <div class="user-name">${u.username}</div>
+                </div>
+            `).join('');
+        } catch {
+            document.getElementById('usersList').innerHTML = '<div class="empty-users">خطأ في التحميل</div>';
+        }
+    }
+
+    // ===== فتح محادثة =====
+    async function openChat(friendId, friendUsername) {
+        currentFriend = { id: friendId, username: friendUsername };
+
+        // تحديث الـ UI
+        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+        const userEl = document.getElementById(`user-${friendId}`);
+        if (userEl) userEl.classList.add('active');
+
+        document.getElementById('welcomeScreen').style.display = 'none';
+        document.getElementById('chatHeader').style.display = 'flex';
+        document.getElementById('messages').style.display = 'flex';
+        document.getElementById('inputArea').style.display = 'flex';
+
+        document.getElementById('friendName').textContent = friendUsername;
+        document.getElementById('friendAvatar').textContent = friendUsername[0].toUpperCase();
+
+        // على الموبايل اخفي الـ sidebar
+        if (window.innerWidth <= 600) {
+            document.getElementById('sidebar').classList.add('hidden');
+        }
+
+        await loadMessages();
+        document.getElementById('msgInput').focus();
+    }
+
+    // ===== جلب الرسائل =====
+    async function loadMessages() {
+        if (!currentFriend) return;
+        try {
+            const res = await fetch(`${API_URL}/messages/${currentFriend.id}`, {
+                headers: { 'authorization': token }
+            });
+            const msgs = await res.json();
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            msgs.forEach(m => appendMessage(m, false));
+            container.scrollTop = container.scrollHeight;
+        } catch { console.error('خطأ في جلب الرسائل'); }
+    }
+
+    // ===== إضافة رسالة للشاشة =====
+    function appendMessage(msg, scroll = true) {
+        const container = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = `message ${msg.sender_id == myId ? 'mine' : 'other'}`;
+
+        const time = new Date(msg.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
+        div.innerHTML = `${msg.content}<div class="msg-time">${time}</div>`;
+        container.appendChild(div);
+        if (scroll) container.scrollTop = container.scrollHeight;
+    }
+
+    // ===== إرسال رسالة =====
+    function sendMessage() {
+        const input = document.getElementById('msgInput');
+        const content = input.value.trim();
+        if (!content || !currentFriend) return;
+        input.value = '';
+
+        socket.emit('send_message', {
+            sender_id: myId,
+            receiver_id: currentFriend.id,
+            content
+        });
+    }
+
+    // ===== تسجيل الخروج =====
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+
+    // ===== موبايل =====
+    function showSidebar() {
+        document.getElementById('sidebar').classList.remove('hidden');
+    }
+
+    // ===== تشغيل =====
+    connectSocket();
+    loadUsers();
+</script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>LinkPad - دخول</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal: #008080;
+            --teal-dark: #005f5f;
+            --teal-light: #00b3b3;
+            --bg: #0a0f0f;
+            --card: #111a1a;
+            --border: #1a2e2e;
+            --text: #e8f4f4;
+            --muted: #5a8a8a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* خلفية متحركة */
+        .bg-circles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-circles span {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,128,128,0.15), transparent 70%);
+            animation: float 8s infinite ease-in-out;
+        }
+        .bg-circles span:nth-child(1) { width: 500px; height: 500px; top: -100px; right: -100px; animation-delay: 0s; }
+        .bg-circles span:nth-child(2) { width: 300px; height: 300px; bottom: -50px; left: -50px; animation-delay: 3s; }
+        .bg-circles span:nth-child(3) { width: 200px; height: 200px; top: 50%; left: 50%; animation-delay: 5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        /* الشعار */
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease;
+        }
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--teal-light);
+            letter-spacing: -1px;
+        }
+        .logo p {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* البطاقة */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 35px;
+            animation: slideUp 0.6s ease 0.1s both;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* تبديل بين تسجيل الدخول والإنشاء */
+        .tabs {
+            display: flex;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 30px;
+            gap: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: var(--muted);
+        }
+        .tab.active {
+            background: var(--teal);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,128,128,0.4);
+        }
+
+        /* الحقول */
+        .field {
+            margin-bottom: 18px;
+        }
+        .field label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .field input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .field input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(0,128,128,0.15);
+        }
+        .field input::placeholder { color: #2a4a4a; }
+
+        /* الزر */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover:not(:disabled) {
+            background: var(--teal-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,128,128,0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* رسالة الخطأ */
+        .msg {
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .msg.error { background: rgba(255,60,60,0.1); color: #ff6b6b; border: 1px solid rgba(255,60,60,0.2); }
+        .msg.success { background: rgba(0,128,128,0.1); color: var(--teal-light); border: 1px solid rgba(0,128,128,0.2); }
+        .msg.show { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* إخفاء/إظهار الفورم */
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="bg-circles">
+    <span></span><span></span><span></span>
+</div>
+
+<div class="container">
+    <div class="logo">
+        <h1>LinkPad</h1>
+        <p>تواصل مع أصدقائك بسهولة</p>
+    </div>
+
+    <div class="card">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">تسجيل الدخول</button>
+            <button class="tab" onclick="switchTab('signup')">حساب جديد</button>
+        </div>
+
+        <!-- فورم تسجيل الدخول -->
+        <div class="form-section active" id="loginForm">
+            <div class="field">
+                <label>اسم المستخدم</label>
+                <input id="loginUser" type="text" placeholder="أدخل اسم المستخدم" autocomplete="username">
+            </div>
+            <div class="field">
+                <label>كلمة السر</label>
+                <input id="loginPass" type="password" placeholder="أدخل كلمة السر" autocomplete="current-password"
+                    onkeypress="if(event.key==='Enter') login()">
+            </div>
+            <button class="btn" id="loginBtn" onclick="login()">دخول</button>
+        </div>
+
+        <!-- فورم إنشاء حساب -->
+        <div class="form-section" id="signupForm">
+            <div class="field">
+                <label>اسم المستخدم</label>
+                <input id="signupUser" type="text" placeholder="اختر اسم مستخدم">
+            </div>
+            <div class="field">
+                <label>كلمة السر</label>
+                <input id="signupPass" type="password" placeholder="اختر كلمة سر قوية"
+                    onkeypress="if(event.key==='Enter') signup()">
+            </div>
+            <button class="btn" id="signupBtn" onclick="signup()">إنشاء الحساب</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://linkpad-chat.onrender.com';
+
+    // لو عنده توكن روح للداشبورد
+    if (localStorage.getItem('token')) window.location.href = 'dashboard.html';
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach((t, i) => {
+            t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1));
+        });
+        document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+        document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
+        hideMsg();
+    }
+
+    function showMsg(text, type) {
+        const el = document.getElementById('msg');
+        el.textContent = text;
+        el.className = `msg ${type} show`;
+    }
+
+    function hideMsg() {
+        document.getElementById('msg').className = 'msg';
+    }
+
+    async function login() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+        const btn = document.getElementById('loginBtn');
+
+        if (!username || !password) return showMsg('يرجى ملء جميع الحقول', 'error');
+
+        btn.disabled = true;
+        btn.textContent = 'جاري التحقق...';
+        hideMsg();
+
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.token) {
+                localStorage.setItem('token', data.token);
+                showMsg('تم الدخول بنجاح! جاري التحويل...', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 800);
+            } else {
+                showMsg(data.error || 'خطأ في اسم المستخدم أو كلمة السر', 'error');
+                btn.disabled = false;
+                btn.textContent = 'دخول';
+            }
+        } catch {
+            showMsg('تعذر الاتصال بالسيرفر', 'error');
+            btn.disabled = false;
+            btn.textContent = 'دخول';
+        }
+    }
+
+    async function signup() {
+        const username = document.getElementById('signupUser').value.trim();
+        const password = document.getElementById('signupPass').value;
+        const btn = document.getElementById('signupBtn');
+
+        if (!username || !password) return showMsg('يرجى ملء جميع الحقول', 'error');
+        if (password.length < 4) return showMsg('كلمة السر يجب أن تكون 4 أحرف على الأقل', 'error');
+
+        btn.disabled = true;
+        btn.textContent = 'جاري الإنشاء...';
+        hideMsg();
+
+        try {
+            const res = await fetch(`${API_URL}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                showMsg('تم إنشاء الحساب! يمكنك تسجيل الدخول الآن', 'success');
+                setTimeout(() => switchTab('login'), 1500);
+            } else {
+                showMsg(data.error || 'خطأ في إنشاء الحساب', 'error');
+            }
+        } catch {
+            showMsg('تعذر الاتصال بالسيرفر', 'error');
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'إنشاء الحساب';
+    }
+</script>
+</body>
+</html>
