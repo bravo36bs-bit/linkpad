@@ -1,16 +1,14 @@
 const express = require('express');
-const path = require('path');
 const mysql = require('mysql2');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: '*' }
-});
+const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json());
@@ -18,7 +16,6 @@ app.use(express.static('public'));
 
 const SECRET_KEY = process.env.JWT_SECRET;
 
-// الاتصال بقاعدة البيانات
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -29,57 +26,53 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-    if (err) {
-        console.error('خطأ في الاتصال بقاعدة البيانات:', err.message);
-        return;
-    }
+    if (err) { console.error('خطأ:', err.message); return; }
     console.log('متصل بقاعدة البيانات ✅');
 
-    // إنشاء جدول المستخدمين إذا ما موجود
-    db.query(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
+    db.query(`CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-    // إنشاء جدول الرسائل إذا ما موجود
-    db.query(`
-        CREATE TABLE IF NOT EXISTS messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            sender_id INT NOT NULL,
-            receiver_id INT NOT NULL,
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
+    db.query(`CREATE TABLE IF NOT EXISTS friends (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        friend_id INT NOT NULL,
+        status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (friend_id) REFERENCES users(id)
+    )`);
+
+    db.query(`CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        content TEXT NOT NULL,
+        is_seen TINYINT DEFAULT 0,
+        deleted_by_sender TINYINT DEFAULT 0,
+        deleted_by_receiver TINYINT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
 });
 
-// ===== Middleware للتحقق من التوكن =====
+// ===== Middleware =====
 function verifyToken(req, res, next) {
     const token = req.headers['authorization'];
     if (!token) return res.status(401).json({ error: 'لا يوجد توكن' });
     try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded;
+        req.user = jwt.verify(token, SECRET_KEY);
         next();
-    } catch (e) {
-        res.status(401).json({ error: 'توكن غير صالح' });
-    }
+    } catch { res.status(401).json({ error: 'توكن غير صالح' }); }
 }
 
-
 // ===== المسارات =====
-
-// السيرفر شغال
 app.get('/', (req, res) => res.send("LinkPad Server Active! ✅"));
-
-// فحص الاتصال
 app.get('/status', (req, res) => res.json({ status: 'ok' }));
 
-// تسجيل مستخدم جديد
+// تسجيل حساب جديد
 app.post('/signup', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password)
@@ -91,7 +84,7 @@ app.post('/signup', (req, res) => {
                 return res.status(400).json({ error: 'اسم المستخدم مستخدم مسبقاً' });
             return res.status(500).json({ error: 'خطأ بالسيرفر' });
         }
-        res.json({ success: true, message: 'تم إنشاء الحساب بنجاح' });
+        res.json({ success: true });
     });
 });
 
@@ -116,12 +109,91 @@ app.post('/login', (req, res) => {
     });
 });
 
-// جلب كل المستخدمين (عشان تختار من تدردش معه)
-app.get('/users', verifyToken, (req, res) => {
-    db.query('SELECT id, username FROM users WHERE id != ?', [req.user.id], (err, results) => {
-        if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
-        res.json(results);
-    });
+// البحث عن مستخدم
+app.get('/search/:username', verifyToken, (req, res) => {
+    const { username } = req.params;
+    db.query(
+        'SELECT id, username FROM users WHERE username LIKE ? AND id != ?',
+        [`%${username}%`, req.user.id],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+            res.json(results);
+        }
+    );
+});
+
+// إرسال طلب صداقة
+app.post('/friend-request', verifyToken, (req, res) => {
+    const { friend_id } = req.body;
+    const user_id = req.user.id;
+
+    db.query(
+        'SELECT * FROM friends WHERE (user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)',
+        [user_id, friend_id, friend_id, user_id],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+            if (results.length > 0)
+                return res.status(400).json({ error: 'طلب صداقة موجود مسبقاً' });
+
+            db.query('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)', [user_id, friend_id], (err) => {
+                if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+                const receiverSocket = onlineUsers[friend_id];
+                if (receiverSocket) {
+                    io.to(receiverSocket).emit('friend_request', {
+                        from_id: user_id,
+                        from_username: req.user.username
+                    });
+                }
+                res.json({ success: true });
+            });
+        }
+    );
+});
+
+// جلب طلبات الصداقة الواردة
+app.get('/friend-requests', verifyToken, (req, res) => {
+    db.query(
+        `SELECT friends.id, users.id as user_id, users.username 
+         FROM friends JOIN users ON friends.user_id = users.id 
+         WHERE friends.friend_id = ? AND friends.status = 'pending'`,
+        [req.user.id],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+            res.json(results);
+        }
+    );
+});
+
+// قبول أو رفض طلب صداقة
+app.post('/friend-response', verifyToken, (req, res) => {
+    const { request_id, action } = req.body;
+    db.query(
+        'UPDATE friends SET status = ? WHERE id = ? AND friend_id = ?',
+        [action, request_id, req.user.id],
+        (err) => {
+            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+            res.json({ success: true });
+        }
+    );
+});
+
+// جلب الأصدقاء المقبولين
+app.get('/friends', verifyToken, (req, res) => {
+    const myId = req.user.id;
+    db.query(
+        `SELECT users.id, users.username FROM friends 
+         JOIN users ON (
+             (friends.user_id = ? AND friends.friend_id = users.id) OR
+             (friends.friend_id = ? AND friends.user_id = users.id)
+         )
+         WHERE (friends.user_id = ? OR friends.friend_id = ?) 
+         AND friends.status = 'accepted'`,
+        [myId, myId, myId, myId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+            res.json(results);
+        }
+    );
 });
 
 // جلب الرسائل بين شخصين
@@ -129,59 +201,59 @@ app.get('/messages/:friendId', verifyToken, (req, res) => {
     const myId = req.user.id;
     const { friendId } = req.params;
     const q = `SELECT * FROM messages 
-               WHERE (sender_id=? AND receiver_id=?) 
-               OR (sender_id=? AND receiver_id=?) 
+               WHERE ((sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?))
+               AND NOT (sender_id=? AND deleted_by_sender=1)
+               AND NOT (receiver_id=? AND deleted_by_receiver=1)
                ORDER BY id ASC`;
-    db.query(q, [myId, friendId, friendId, myId], (err, results) => {
+    db.query(q, [myId, friendId, friendId, myId, myId, myId], (err, results) => {
         if (err) return res.status(500).json({ error: 'خطأ بالسيرفر' });
+        db.query('UPDATE messages SET is_seen = 1 WHERE sender_id = ? AND receiver_id = ? AND is_seen = 0', [friendId, myId]);
         res.json(results);
     });
 });
 
-// ===== Socket.io للدردشة الفورية =====
-const onlineUsers = {}; // { userId: socketId }
+// حذف رسالة
+app.delete('/message/:id', verifyToken, (req, res) => {
+    const myId = req.user.id;
+    const { id } = req.params;
+    db.query('SELECT * FROM messages WHERE id = ?', [id], (err, results) => {
+        if (err || !results.length) return res.status(404).json({ error: 'الرسالة غير موجودة' });
+        const msg = results[0];
+        if (msg.sender_id == myId) {
+            db.query('UPDATE messages SET deleted_by_sender = 1 WHERE id = ?', [id]);
+        } else if (msg.receiver_id == myId) {
+            db.query('UPDATE messages SET deleted_by_receiver = 1 WHERE id = ?', [id]);
+        }
+        const otherId = msg.sender_id == myId ? msg.receiver_id : msg.sender_id;
+        const otherSocket = onlineUsers[otherId];
+        if (otherSocket) io.to(otherSocket).emit('message_deleted', { id });
+        res.json({ success: true });
+    });
+});
+
+// ===== Socket.io =====
+const onlineUsers = {};
 
 io.on('connection', (socket) => {
-    console.log('مستخدم اتصل:', socket.id);
-
-    // تسجيل المستخدم
     socket.on('register', (userId) => {
         onlineUsers[userId] = socket.id;
-        console.log(`المستخدم ${userId} متصل`);
     });
 
-    // إرسال رسالة
     socket.on('send_message', (data) => {
         const { sender_id, receiver_id, content } = data;
-
-        // حفظ الرسالة بقاعدة البيانات
         db.query(
             'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)',
             [sender_id, receiver_id, content],
             (err, result) => {
                 if (err) return;
-
-                const message = {
-                    id: result.insertId,
-                    sender_id,
-                    receiver_id,
-                    content,
-                    created_at: new Date()
-                };
-
-                // إرسال للمرسل
+                const message = { id: result.insertId, sender_id, receiver_id, content, is_seen: 0, created_at: new Date() };
                 socket.emit('receive_message', message);
-
-                // إرسال للمستقبل لو متصل
                 const receiverSocket = onlineUsers[receiver_id];
-                if (receiverSocket) {
-                    io.to(receiverSocket).emit('receive_message', message);
-                }
+                if (receiverSocket) io.to(receiverSocket).emit('receive_message', message);
             }
         );
     });
 
-    // قطع الاتصال
     socket.on('disconnect', () => {
         for (const userId in onlineUsers) {
             if (onlineUsers[userId] === socket.id) {

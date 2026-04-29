@@ -17,340 +17,175 @@
             --border: #1a2e2e;
             --text: #e8f4f4;
             --muted: #5a8a8a;
-            --online: #00e676;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; display: flex; overflow: hidden; }
 
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100dvh;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* ===== القائمة الجانبية ===== */
-        .sidebar {
-            width: 280px;
-            background: var(--card);
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .sidebar-header h2 {
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--teal-light);
-        }
-
-        .logout-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--muted);
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-        .logout-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
-
-        .my-info {
-            padding: 15px 20px;
-            background: var(--card2);
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
+        /* ===== Sidebar ===== */
+        .sidebar { width: 280px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s; }
+        .sidebar-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-header h2 { font-size: 1.3rem; font-weight: 900; color: var(--teal-light); }
+        .sidebar-actions { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+        .icon-btn:hover { border-color: var(--teal); color: var(--teal-light); }
+        .badge { position: absolute; top: -5px; left: -5px; background: #ff4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; display: none; }
+        .my-info { padding: 12px 20px; background: var(--card2); border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
         .my-info span { color: var(--teal-light); font-weight: 700; }
+        .section-title { padding: 12px 20px 8px; font-size: 0.75rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .friends-list { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
+        .friends-list::-webkit-scrollbar { width: 3px; }
+        .friends-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .friend-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 3px; }
+        .friend-item:hover { background: var(--card2); }
+        .friend-item.active { background: rgba(0,128,128,0.15); border: 1px solid rgba(0,128,128,0.3); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--teal-dark); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .friend-info { flex: 1; min-width: 0; }
+        .friend-name { font-size: 0.9rem; font-weight: 500; }
+        .unread { background: var(--teal); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; display: none; }
+        .empty-list { text-align: center; color: var(--muted); padding: 25px 15px; font-size: 0.85rem; line-height: 1.8; }
 
-        .users-title {
-            padding: 15px 20px 10px;
-            font-size: 0.8rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        /* ===== Search Panel ===== */
+        .panel { position: absolute; top: 0; right: 0; width: 280px; height: 100%; background: var(--card); border-left: 1px solid var(--border); z-index: 200; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .panel.open { transform: translateX(0); }
+        .panel-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .panel-header h3 { font-size: 1rem; font-weight: 700; }
+        .close-btn { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+        .search-input { margin: 15px; padding: 10px 15px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; outline: none; }
+        .search-input:focus { border-color: var(--teal); }
+        .search-results { flex: 1; overflow-y: auto; padding: 0 15px; }
+        .search-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; margin-bottom: 5px; }
+        .search-item .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
+        .search-item span { flex: 1; font-size: 0.9rem; }
+        .add-btn { background: var(--teal); border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; transition: all 0.2s; }
+        .add-btn:hover { background: var(--teal-light); }
+        .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .users-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 10px;
-        }
+        /* ===== Requests Panel ===== */
+        .request-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; background: var(--card2); }
+        .request-item .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
+        .request-item span { flex: 1; font-size: 0.9rem; }
+        .req-btns { display: flex; gap: 5px; }
+        .accept-btn { background: var(--teal); border: none; color: white; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; }
+        .reject-btn { background: none; border: 1px solid #ff4444; color: #ff4444; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; }
 
-        .users-list::-webkit-scrollbar { width: 4px; }
-        .users-list::-webkit-scrollbar-track { background: transparent; }
-        .users-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-        .user-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 4px;
-        }
-        .user-item:hover { background: var(--card2); }
-        .user-item.active { background: rgba(0,128,128,0.15); border: 1px solid rgba(0,128,128,0.3); }
-
-        .avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--teal-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .user-name { font-size: 0.95rem; font-weight: 500; }
-
-        .unread-badge {
-            margin-right: auto;
-            background: var(--teal);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 700;
-            display: none;
-        }
-
-        .empty-users {
-            text-align: center;
-            color: var(--muted);
-            padding: 30px;
-            font-size: 0.9rem;
-        }
-
-        /* ===== منطقة الدردشة ===== */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* شاشة الترحيب */
-        .welcome-screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-            gap: 15px;
-        }
-        .welcome-screen .icon { font-size: 4rem; }
-        .welcome-screen h3 { font-size: 1.2rem; color: var(--text); }
-        .welcome-screen p { font-size: 0.9rem; }
-
-        /* رأس الدردشة */
-        .chat-header {
-            padding: 18px 20px;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            display: none;
-        }
-
-        .chat-header .avatar { width: 38px; height: 38px; font-size: 0.95rem; }
-        .chat-header-name { font-weight: 700; font-size: 1rem; }
+        /* ===== Chat Area ===== */
+        .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 12px; }
+        .welcome-screen .icon { font-size: 3.5rem; }
+        .welcome-screen h3 { font-size: 1.1rem; color: var(--text); }
+        .chat-header { padding: 15px 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; display: none; }
+        .chat-header .avatar { width: 36px; height: 36px; font-size: 0.9rem; }
+        .chat-header-name { font-weight: 700; }
+        .back-btn { display: none; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; margin-left: auto; }
+        .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 6px; display: none; }
+        .messages::-webkit-scrollbar { width: 3px; }
+        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
         /* الرسائل */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            display: none;
-        }
-
-        .messages::-webkit-scrollbar { width: 4px; }
-        .messages::-webkit-scrollbar-track { background: transparent; }
-        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-        .message {
-            max-width: 70%;
-            padding: 10px 14px;
-            border-radius: 16px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            animation: msgIn 0.2s ease;
-            word-break: break-word;
-        }
-
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.mine {
-            align-self: flex-start;
-            background: var(--teal);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.other {
-            align-self: flex-end;
-            background: var(--card);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
-        }
-
-        .msg-time {
-            font-size: 0.7rem;
-            opacity: 0.6;
-            margin-top: 4px;
-            text-align: left;
-        }
+        .msg-wrapper { display: flex; flex-direction: column; }
+        .msg-wrapper.mine { align-items: flex-start; }
+        .msg-wrapper.other { align-items: flex-end; }
+        .message { max-width: 70%; padding: 9px 13px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5; animation: msgIn 0.2s ease; word-break: break-word; position: relative; cursor: pointer; }
+        .message:hover .delete-btn { display: flex; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-wrapper.mine .message { background: var(--teal); color: white; border-bottom-right-radius: 4px; }
+        .msg-wrapper.other .message { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .msg-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; padding: 0 4px; }
+        .msg-time { font-size: 0.68rem; color: var(--muted); }
+        .seen-icon { font-size: 0.75rem; color: var(--teal-light); }
+        .delete-btn { display: none; position: absolute; top: -10px; left: -10px; background: #ff4444; border: none; color: white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 0.7rem; align-items: center; justify-content: center; }
 
         /* حقل الإرسال */
-        .input-area {
-            padding: 15px 20px;
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            display: none;
-        }
-
-        .input-area input {
-            flex: 1;
-            padding: 13px 18px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 25px;
-            color: var(--text);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+        .input-area { padding: 12px 15px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; display: none; }
+        .input-area input { flex: 1; padding: 11px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 22px; color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
         .input-area input:focus { border-color: var(--teal); }
         .input-area input::placeholder { color: #2a4a4a; }
-
-        .send-btn {
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            background: var(--teal);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
+        .send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--teal); border: none; color: white; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .send-btn:hover { background: var(--teal-light); transform: scale(1.05); }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--teal); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
 
         /* موبايل */
         @media (max-width: 600px) {
-            .sidebar {
-                position: fixed;
-                top: 0; right: 0;
-                height: 100%;
-                z-index: 100;
-                transform: translateX(0);
-            }
+            .sidebar { position: fixed; top: 0; right: 0; height: 100%; z-index: 100; }
             .sidebar.hidden { transform: translateX(100%); }
-            .chat-area { width: 100%; }
             .back-btn { display: flex !important; }
-        }
-
-        .back-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-size: 1.3rem;
-            cursor: pointer;
-            padding: 5px;
+            .panel { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<!-- القائمة الجانبية -->
+<!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h2>LinkPad</h2>
-        <button class="logout-btn" onclick="logout()">خروج</button>
+        <div class="sidebar-actions">
+            <!-- طلبات الصداقة -->
+            <button class="icon-btn" onclick="togglePanel('requestsPanel')" title="طلبات الصداقة">
+                🔔
+                <span class="badge" id="requestsBadge">0</span>
+            </button>
+            <!-- إضافة صديق -->
+            <button class="icon-btn" onclick="togglePanel('searchPanel')" title="إضافة صديق">➕</button>
+            <!-- خروج -->
+            <button class="icon-btn" onclick="logout()" title="خروج" style="border-color:#ff4444; color:#ff4444;">⏻</button>
+        </div>
     </div>
-    <div class="my-info">مرحباً، <span id="my-name">...</span></div>
-    <div class="users-title">المستخدمون</div>
-    <div class="users-list" id="usersList">
-        <div class="empty-users">جاري التحميل...</div>
+    <div class="my-info">أنت: <span id="my-name">...</span></div>
+    <div class="section-title">الأصدقاء</div>
+    <div class="friends-list" id="friendsList">
+        <div class="empty-list">ما عندك أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>
     </div>
 </div>
 
-<!-- منطقة الدردشة -->
+<!-- Panel البحث -->
+<div class="panel" id="searchPanel">
+    <div class="panel-header">
+        <h3>إضافة صديق</h3>
+        <button class="close-btn" onclick="togglePanel('searchPanel')">✕</button>
+    </div>
+    <input class="search-input" id="searchInput" placeholder="ابحث عن مستخدم..." oninput="searchUsers()">
+    <div class="search-results" id="searchResults"></div>
+</div>
+
+<!-- Panel طلبات الصداقة -->
+<div class="panel" id="requestsPanel">
+    <div class="panel-header">
+        <h3>طلبات الصداقة</h3>
+        <button class="close-btn" onclick="togglePanel('requestsPanel')">✕</button>
+    </div>
+    <div class="search-results" id="requestsList" style="padding-top:10px;"></div>
+</div>
+
+<!-- Chat Area -->
 <div class="chat-area">
-    <!-- شاشة الترحيب -->
     <div class="welcome-screen" id="welcomeScreen">
         <div class="icon">💬</div>
-        <h3>اختر شخصاً للدردشة</h3>
-        <p>اختر من القائمة على اليمين للبدء</p>
+        <h3>اختر صديقاً للدردشة</h3>
+        <p style="font-size:0.85rem;">اختر من القائمة على اليمين</p>
     </div>
-
-    <!-- رأس الدردشة -->
     <div class="chat-header" id="chatHeader">
-        <button class="back-btn" onclick="showSidebar()">→</button>
         <div class="avatar" id="friendAvatar"></div>
         <div class="chat-header-name" id="friendName"></div>
+        <button class="back-btn" onclick="showSidebar()">→</button>
     </div>
-
-    <!-- الرسائل -->
     <div class="messages" id="messages"></div>
-
-    <!-- حقل الإرسال -->
     <div class="input-area" id="inputArea">
         <input id="msgInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()">
         <button class="send-btn" onclick="sendMessage()">↑</button>
     </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
     const API_URL = 'https://linkpad-chat.onrender.com';
     const token = localStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
 
-    // فك التوكن
     let myId, myName;
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -365,66 +200,142 @@
     // ===== Socket.io =====
     function connectSocket() {
         socket = io(API_URL);
-        socket.on('connect', () => {
-            socket.emit('register', myId);
-        });
+        socket.on('connect', () => socket.emit('register', myId));
+
         socket.on('receive_message', (msg) => {
-            if (
-                currentFriend &&
-                (msg.sender_id == currentFriend.id || msg.receiver_id == currentFriend.id)
-            ) {
+            if (currentFriend && (msg.sender_id == currentFriend.id || msg.receiver_id == currentFriend.id)) {
                 appendMessage(msg);
             }
         });
+
+        socket.on('message_deleted', ({ id }) => {
+            const el = document.getElementById(`msg-${id}`);
+            if (el) el.remove();
+        });
+
+        socket.on('friend_request', (data) => {
+            showToast(`طلب صداقة من ${data.from_username}`);
+            loadFriendRequests();
+        });
     }
 
-    // ===== جلب المستخدمين =====
-    async function loadUsers() {
+    // ===== الأصدقاء =====
+    async function loadFriends() {
         try {
-            const res = await fetch(`${API_URL}/users`, {
-                headers: { 'authorization': token }
-            });
-            const users = await res.json();
-            const list = document.getElementById('usersList');
-
-            if (!users.length) {
-                list.innerHTML = '<div class="empty-users">لا يوجد مستخدمون آخرون بعد</div>';
+            const res = await fetch(`${API_URL}/friends`, { headers: { 'authorization': token } });
+            const friends = await res.json();
+            const list = document.getElementById('friendsList');
+            if (!friends.length) {
+                list.innerHTML = '<div class="empty-list">ما عندك أصدقاء بعد<br>اضغط ➕ لإضافة صديق</div>';
                 return;
             }
-
-            list.innerHTML = users.map(u => `
-                <div class="user-item" id="user-${u.id}" onclick="openChat(${u.id}, '${u.username}')">
-                    <div class="avatar">${u.username[0].toUpperCase()}</div>
-                    <div class="user-name">${u.username}</div>
+            list.innerHTML = friends.map(f => `
+                <div class="friend-item" id="friend-${f.id}" onclick="openChat(${f.id}, '${f.username}')">
+                    <div class="avatar">${f.username[0].toUpperCase()}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${f.username}</div>
+                    </div>
                 </div>
             `).join('');
-        } catch {
-            document.getElementById('usersList').innerHTML = '<div class="empty-users">خطأ في التحميل</div>';
-        }
+        } catch { console.error('خطأ في جلب الأصدقاء'); }
+    }
+
+    // ===== طلبات الصداقة =====
+    async function loadFriendRequests() {
+        try {
+            const res = await fetch(`${API_URL}/friend-requests`, { headers: { 'authorization': token } });
+            const requests = await res.json();
+            const badge = document.getElementById('requestsBadge');
+            if (requests.length > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = requests.length;
+            } else {
+                badge.style.display = 'none';
+            }
+            const list = document.getElementById('requestsList');
+            if (!requests.length) {
+                list.innerHTML = '<div class="empty-list">لا يوجد طلبات صداقة</div>';
+                return;
+            }
+            list.innerHTML = requests.map(r => `
+                <div class="request-item" id="req-${r.id}">
+                    <div class="avatar">${r.username[0].toUpperCase()}</div>
+                    <span>${r.username}</span>
+                    <div class="req-btns">
+                        <button class="accept-btn" onclick="respondRequest(${r.id}, 'accepted')">قبول</button>
+                        <button class="reject-btn" onclick="respondRequest(${r.id}, 'rejected')">رفض</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch { console.error('خطأ'); }
+    }
+
+    async function respondRequest(requestId, action) {
+        try {
+            await fetch(`${API_URL}/friend-response`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'authorization': token },
+                body: JSON.stringify({ request_id: requestId, action })
+            });
+            document.getElementById(`req-${requestId}`)?.remove();
+            if (action === 'accepted') {
+                loadFriends();
+                showToast('تمت إضافة الصديق! 🎉');
+            }
+            loadFriendRequests();
+        } catch { console.error('خطأ'); }
+    }
+
+    // ===== البحث =====
+    let searchTimeout;
+    async function searchUsers() {
+        const query = document.getElementById('searchInput').value.trim();
+        const results = document.getElementById('searchResults');
+        if (!query) { results.innerHTML = ''; return; }
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`${API_URL}/search/${query}`, { headers: { 'authorization': token } });
+                const users = await res.json();
+                if (!users.length) { results.innerHTML = '<div class="empty-list">لا يوجد نتائج</div>'; return; }
+                results.innerHTML = users.map(u => `
+                    <div class="search-item">
+                        <div class="avatar">${u.username[0].toUpperCase()}</div>
+                        <span>${u.username}</span>
+                        <button class="add-btn" id="add-${u.id}" onclick="sendFriendRequest(${u.id})">إضافة</button>
+                    </div>
+                `).join('');
+            } catch { console.error('خطأ'); }
+        }, 400);
+    }
+
+    async function sendFriendRequest(friendId) {
+        const btn = document.getElementById(`add-${friendId}`);
+        if (btn) { btn.disabled = true; btn.textContent = 'تم الإرسال'; }
+        try {
+            const res = await fetch(`${API_URL}/friend-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'authorization': token },
+                body: JSON.stringify({ friend_id: friendId })
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error); if (btn) { btn.disabled = false; btn.textContent = 'إضافة'; } }
+            else showToast('تم إرسال طلب الصداقة ✅');
+        } catch { console.error('خطأ'); }
     }
 
     // ===== فتح محادثة =====
     async function openChat(friendId, friendUsername) {
         currentFriend = { id: friendId, username: friendUsername };
-
-        // تحديث الـ UI
-        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-        const userEl = document.getElementById(`user-${friendId}`);
-        if (userEl) userEl.classList.add('active');
-
+        document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`friend-${friendId}`)?.classList.add('active');
         document.getElementById('welcomeScreen').style.display = 'none';
         document.getElementById('chatHeader').style.display = 'flex';
         document.getElementById('messages').style.display = 'flex';
         document.getElementById('inputArea').style.display = 'flex';
-
         document.getElementById('friendName').textContent = friendUsername;
         document.getElementById('friendAvatar').textContent = friendUsername[0].toUpperCase();
-
-        // على الموبايل اخفي الـ sidebar
-        if (window.innerWidth <= 600) {
-            document.getElementById('sidebar').classList.add('hidden');
-        }
-
+        if (window.innerWidth <= 600) document.getElementById('sidebar').classList.add('hidden');
         await loadMessages();
         document.getElementById('msgInput').focus();
     }
@@ -433,26 +344,36 @@
     async function loadMessages() {
         if (!currentFriend) return;
         try {
-            const res = await fetch(`${API_URL}/messages/${currentFriend.id}`, {
-                headers: { 'authorization': token }
-            });
+            const res = await fetch(`${API_URL}/messages/${currentFriend.id}`, { headers: { 'authorization': token } });
             const msgs = await res.json();
             const container = document.getElementById('messages');
             container.innerHTML = '';
             msgs.forEach(m => appendMessage(m, false));
             container.scrollTop = container.scrollHeight;
-        } catch { console.error('خطأ في جلب الرسائل'); }
+        } catch { console.error('خطأ'); }
     }
 
-    // ===== إضافة رسالة للشاشة =====
+    // ===== إضافة رسالة =====
     function appendMessage(msg, scroll = true) {
         const container = document.getElementById('messages');
-        const div = document.createElement('div');
-        div.className = `message ${msg.sender_id == myId ? 'mine' : 'other'}`;
-
+        const isMine = msg.sender_id == myId;
         const time = new Date(msg.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
-        div.innerHTML = `${msg.content}<div class="msg-time">${time}</div>`;
-        container.appendChild(div);
+        const seen = isMine && msg.is_seen ? '<span class="seen-icon">✓✓</span>' : '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper ${isMine ? 'mine' : 'other'}`;
+        wrapper.id = `msg-${msg.id}`;
+        wrapper.innerHTML = `
+            <div class="message">
+                ${msg.content}
+                <button class="delete-btn" onclick="deleteMessage(${msg.id})">✕</button>
+            </div>
+            <div class="msg-meta">
+                <span class="msg-time">${time}</span>
+                ${seen}
+            </div>
+        `;
+        container.appendChild(wrapper);
         if (scroll) container.scrollTop = container.scrollHeight;
     }
 
@@ -462,28 +383,46 @@
         const content = input.value.trim();
         if (!content || !currentFriend) return;
         input.value = '';
-
-        socket.emit('send_message', {
-            sender_id: myId,
-            receiver_id: currentFriend.id,
-            content
-        });
+        socket.emit('send_message', { sender_id: myId, receiver_id: currentFriend.id, content });
     }
 
-    // ===== تسجيل الخروج =====
+    // ===== حذف رسالة =====
+    async function deleteMessage(id) {
+        try {
+            await fetch(`${API_URL}/message/${id}`, { method: 'DELETE', headers: { 'authorization': token } });
+            document.getElementById(`msg-${id}`)?.remove();
+        } catch { console.error('خطأ'); }
+    }
+
+    // ===== Panels =====
+    function togglePanel(panelId) {
+        const panel = document.getElementById(panelId);
+        panel.classList.toggle('open');
+        if (panelId === 'requestsPanel' && panel.classList.contains('open')) loadFriendRequests();
+    }
+
+    // ===== Toast =====
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== خروج =====
     function logout() {
         localStorage.removeItem('token');
         window.location.href = 'login.html';
     }
 
-    // ===== موبايل =====
     function showSidebar() {
         document.getElementById('sidebar').classList.remove('hidden');
     }
 
     // ===== تشغيل =====
     connectSocket();
-    loadUsers();
+    loadFriends();
+    loadFriendRequests();
 </script>
 </body>
 </html>
