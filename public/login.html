@@ -1,325 +1,55 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0c10">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Falcon Office</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-:root {
-    --bg:      #0a0c10;
-    --surface: #12151c;
-    --surface2:#1a1e28;
-    --border:  #252a38;
-    --gold:    #c8a96e;
-    --gold2:   #e8c98e;
-    --gold3:   #a07840;
-    --text:    #e8e4dc;
-    --muted:   #6b7280;
-    --danger:  #c0392b;
-    --r:       16px;
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-body {
-    font-family:'Tajawal', sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100vh;
-    min-height:100dvh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    position:relative;
-}
-
-/* ── خلفية ── */
-.bg-layer {
-    position:fixed; inset:0; z-index:0;
-    background:
-        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(200,169,110,.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(200,169,110,.05) 0%, transparent 60%),
-        #0a0c10;
-}
-.grid-lines {
-    position:fixed; inset:0; z-index:0;
-    background-image:
-        linear-gradient(rgba(200,169,110,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,169,110,.04) 1px, transparent 1px);
-    background-size:40px 40px;
-}
-
-/* ── الصقر SVG ── */
-.falcon-icon {
-    width:64px; height:64px;
-    margin:0 auto 8px;
-    animation:soar 3s ease-in-out infinite;
-}
-@keyframes soar {
-    0%,100% { transform:translateY(0) rotate(-2deg); }
-    50%      { transform:translateY(-8px) rotate(2deg); }
-}
-
-/* ── الحاوية ── */
-.wrap {
-    position:relative; z-index:1;
-    width:100%; max-width:380px;
-    padding:20px 16px;
-    display:flex; flex-direction:column;
-    gap:24px;
-}
-
-/* ── الشعار ── */
-.logo { text-align:center; }
-.logo h1 {
-    font-family:'Syne', sans-serif;
-    font-size:2rem; font-weight:800;
-    letter-spacing:2px;
-    background:linear-gradient(135deg, var(--gold) 0%, var(--gold2) 50%, var(--gold3) 100%);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
-}
-.logo p { color:var(--muted); font-size:.82rem; margin-top:4px; letter-spacing:1px; }
-
-/* ── البطاقة ── */
-.card {
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:24px;
-    box-shadow:0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(200,169,110,.06);
-    animation:rise .5s cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes rise {
-    from { opacity:0; transform:translateY(24px); }
-    to   { opacity:1; transform:translateY(0); }
-}
-
-/* ── Tabs ── */
-.tabs {
-    display:grid; grid-template-columns:1fr 1fr;
-    background:var(--bg);
-    border-radius:12px;
-    padding:3px; gap:3px;
-    margin-bottom:22px;
-    border:1px solid var(--border);
-}
-.tab {
-    padding:9px;
-    border:none; border-radius:10px;
-    background:transparent;
-    color:var(--muted);
-    font-family:'Tajawal',sans-serif;
-    font-size:.88rem; font-weight:600;
-    cursor:pointer;
-    transition:all .25s;
-    letter-spacing:.3px;
-}
-.tab.on {
-    background:linear-gradient(135deg, var(--gold3), var(--gold));
-    color:#0a0c10;
-    box-shadow:0 4px 16px rgba(200,169,110,.3);
-}
-
-/* ── الحقول ── */
-.field { margin-bottom:14px; }
-.field label {
-    display:block;
-    font-size:.78rem; color:var(--muted);
-    margin-bottom:7px; letter-spacing:.5px;
-}
-.field input {
-    width:100%;
-    padding:13px 14px;
-    background:var(--surface2);
-    border:1px solid var(--border);
-    border-radius:12px;
-    color:var(--text);
-    font-family:'Tajawal',sans-serif;
-    font-size:.95rem; outline:none;
-    transition:border-color .2s, box-shadow .2s;
-    -webkit-appearance:none;
-}
-.field input:focus {
-    border-color:var(--gold3);
-    box-shadow:0 0 0 3px rgba(200,169,110,.1);
-}
-.field input::placeholder { color:#2a2f3d; }
-
-/* ── الزر ── */
-.btn {
-    width:100%; padding:14px;
-    background:linear-gradient(135deg, var(--gold3) 0%, var(--gold) 100%);
-    color:#0a0c10;
-    border:none; border-radius:12px;
-    font-family:'Tajawal',sans-serif;
-    font-size:1rem; font-weight:700;
-    cursor:pointer;
-    transition:all .25s;
-    letter-spacing:.5px;
-    -webkit-appearance:none;
-    position:relative; overflow:hidden;
-}
-.btn::after {
-    content:'';
-    position:absolute; inset:0;
-    background:rgba(255,255,255,0);
-    transition:background .2s;
-}
-.btn:active::after { background:rgba(255,255,255,.1); }
-.btn:disabled { opacity:.5; cursor:not-allowed; }
-
-/* ── رسالة ── */
-.alert {
-    margin-top:14px;
-    padding:11px 14px;
-    border-radius:10px;
-    font-size:.85rem;
-    text-align:center;
-    display:none;
-    animation:rise .3s ease;
-}
-.alert.err { background:rgba(192,57,43,.1); color:#e74c3c; border:1px solid rgba(192,57,43,.2); }
-.alert.ok  { background:rgba(200,169,110,.1); color:var(--gold2); border:1px solid rgba(200,169,110,.2); }
-.alert.show { display:block; }
-
-.section { display:none; }
-.section.on { display:block; }
-</style>
+    <meta charset="UTF-8">
+    <title>Falcon Office - تسجيل الدخول</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #2d2d2d; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #3d3d3d; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #ffcc00; color: #1a1a1a; font-weight: bold; cursor: pointer; }
+        button:hover { background: #e6b800; }
+        .error { color: #ff4444; font-size: 14px; margin-top: 10px; }
+    </style>
 </head>
 <body>
-
-<div class="bg-layer"></div>
-<div class="grid-lines"></div>
-
-<div class="wrap">
-    <!-- الشعار -->
-    <div class="logo">
-        <svg class="falcon-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M32 8 C20 8 10 20 12 34 C14 44 22 52 32 54 C42 52 50 44 52 34 C54 20 44 8 32 8Z" fill="rgba(200,169,110,.08)" stroke="#c8a96e" stroke-width="1"/>
-            <path d="M32 12 L18 30 L26 28 L20 50 L32 36 L44 50 L38 28 L46 30 Z" fill="#c8a96e" opacity=".9"/>
-            <circle cx="26" cy="22" r="2" fill="#e8c98e"/>
-        </svg>
-        <h1>FALCON OFFICE</h1>
-        <p>PRIVATE · SECURE · FAST</p>
+    <div class="login-card">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <button onclick="login()">دخول</button>
+        <div id="error-msg" class="error"></div>
     </div>
 
-    <!-- البطاقة -->
-    <div class="card">
-        <div class="tabs">
-            <button class="tab on" onclick="sw('login')">دخول</button>
-            <button class="tab"    onclick="sw('signup')">حساب جديد</button>
-        </div>
+    <script>
+        const API = 'http://localhost:3000';
 
-        <!-- Login -->
-        <div class="section on" id="loginSec">
-            <div class="field">
-                <label>اسم المستخدم</label>
-                <input id="lu" type="text" placeholder="أدخل اسمك" autocomplete="username" inputmode="text">
-            </div>
-            <div class="field">
-                <label>كلمة السر</label>
-                <input id="lp" type="password" placeholder="••••••••" autocomplete="current-password"
-                    onkeypress="if(event.key==='Enter')login()">
-            </div>
-            <button class="btn" id="lbtn" onclick="login()">دخول</button>
-        </div>
+        async function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-msg');
 
-        <!-- Signup -->
-        <div class="section" id="signupSec">
-            <div class="field">
-                <label>اسم المستخدم</label>
-                <input id="su" type="text" placeholder="اختر اسماً (3+ أحرف)" inputmode="text">
-            </div>
-            <div class="field">
-                <label>كلمة السر</label>
-                <input id="sp" type="password" placeholder="اختر كلمة سر قوية"
-                    onkeypress="if(event.key==='Enter')signup()">
-            </div>
-            <button class="btn" id="sbtn" onclick="signup()">إنشاء الحساب</button>
-        </div>
+            try {
+                const response = await fetch(`${API}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
 
-        <div class="alert" id="alert"></div>
-    </div>
-</div>
+                const data = await response.json();
 
-<script>
-const API = 'https://linkpad-chat.onrender.com';
-if (localStorage.getItem('fo_token')) location.href = 'dashboard.html';
-
-function sw(tab) {
-    document.querySelectorAll('.tab').forEach((t,i) =>
-        t.classList.toggle('on', (tab==='login'&&i===0)||(tab==='signup'&&i===1))
-    );
-    document.getElementById('loginSec').classList.toggle('on', tab==='login');
-    document.getElementById('signupSec').classList.toggle('on', tab==='signup');
-    hide();
-}
-
-function show(msg, type) {
-    const el = document.getElementById('alert');
-    el.textContent = msg;
-    el.className = `alert ${type} show`;
-}
-function hide() { document.getElementById('alert').className = 'alert'; }
-
-async function login() {
-    const u = document.getElementById('lu').value.trim();
-    const p = document.getElementById('lp').value;
-    const btn = document.getElementById('lbtn');
-    if (!u || !p) return show('يرجى ملء جميع الحقول', 'err');
-    btn.disabled = true; btn.textContent = 'جاري التحقق...';
-    try {
-        const r = await fetch(`${API}/login`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({username:u, password:p})
-        });
-        const d = await r.json();
-        if (r.ok && d.token) {
-            localStorage.setItem('fo_token', d.token);
-            show('مرحباً! جاري الدخول...', 'ok');
-            setTimeout(() => location.href='dashboard.html', 600);
-        } else {
-            show(d.error || 'بيانات خاطئة', 'err');
-            btn.disabled = false; btn.textContent = 'دخول';
+                if (response.ok) {
+                    // تخزين البيانات للانتقال للداشبورد
+                    localStorage.setItem('fo_token', data.token);
+                    localStorage.setItem('fo_user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorDiv.innerText = data.error || 'خطأ في الدخول';
+                }
+            } catch (err) {
+                errorDiv.innerText = 'السيرفر غير متصل';
+            }
         }
-    } catch {
-        show('تعذر الاتصال بالسيرفر', 'err');
-        btn.disabled = false; btn.textContent = 'دخول';
-    }
-}
-
-async function signup() {
-    const u = document.getElementById('su').value.trim();
-    const p = document.getElementById('sp').value;
-    const btn = document.getElementById('sbtn');
-    if (!u || !p) return show('يرجى ملء جميع الحقول', 'err');
-    btn.disabled = true; btn.textContent = 'جاري الإنشاء...';
-    try {
-        const r = await fetch(`${API}/signup`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({username:u, password:p})
-        });
-        const d = await r.json();
-        if (r.ok) {
-            show('تم الإنشاء! سجل دخولك الآن', 'ok');
-            setTimeout(() => sw('login'), 1400);
-        } else {
-            show(d.error || 'خطأ في الإنشاء', 'err');
-        }
-    } catch {
-        show('تعذر الاتصال بالسيرفر', 'err');
-    }
-    btn.disabled = false; btn.textContent = 'إنشاء الحساب';
-}
-</script>
+    </script>
 </body>
 </html>
