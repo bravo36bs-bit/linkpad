@@ -43,11 +43,11 @@ function initTables() {
 
     db.query(`
         CREATE TABLE IF NOT EXISTS friends (
-            id        INT AUTO_INCREMENT PRIMARY KEY,
-            sender_id INT NOT NULL,
+            id          INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id   INT NOT NULL,
             receiver_id INT NOT NULL,
-            status    ENUM('pending','accepted','rejected') DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status      ENUM('pending','accepted','rejected') DEFAULT 'pending',
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY unique_pair (sender_id, receiver_id),
             FOREIGN KEY (sender_id)   REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
@@ -56,14 +56,14 @@ function initTables() {
 
     db.query(`
         CREATE TABLE IF NOT EXISTS messages (
-            id          INT AUTO_INCREMENT PRIMARY KEY,
-            sender_id   INT NOT NULL,
-            receiver_id INT NOT NULL,
-            content     TEXT NOT NULL,
-            is_seen     TINYINT DEFAULT 0,
+            id                  INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id           INT NOT NULL,
+            receiver_id         INT NOT NULL,
+            content             TEXT NOT NULL,
+            is_seen             TINYINT DEFAULT 0,
             deleted_by_sender   TINYINT DEFAULT 0,
             deleted_by_receiver TINYINT DEFAULT 0,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sender_id)   REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
         )
@@ -76,6 +76,7 @@ function auth(req, res, next) {
     if (!token) return res.status(401).json({ error: 'غير مصرح' });
     try {
         req.user = jwt.verify(token, SECRET);
+        req.user.id = parseInt(req.user.id);
         next();
     } catch {
         res.status(401).json({ error: 'توكن غير صالح' });
@@ -96,7 +97,7 @@ function query(sql, params) {
 //  المسارات
 // ═══════════════════════════════════════════════════════════════
 
-app.get('/',       (_, res) => res.send('Falcon Meet Server Active ✅'));
+app.get('/',       (_, res) => res.send('Falcon Office Server Active ✅'));
 app.get('/status', (_, res) => res.json({ status: 'ok' }));
 
 // ── تسجيل حساب ────────────────────────────────────────────────
@@ -124,10 +125,17 @@ app.post('/login', async (req, res) => {
     if (!username || !password)
         return res.status(400).json({ error: 'اسم المستخدم وكلمة السر مطلوبان' });
     try {
-        const rows = await query('SELECT id, username FROM users WHERE username=? AND password=?', [username, password]);
+        const rows = await query(
+            'SELECT id, username FROM users WHERE username=? AND password=?',
+            [username, password]
+        );
         if (!rows.length)
             return res.status(401).json({ error: 'اسم المستخدم أو كلمة السر خاطئة' });
-        const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, SECRET, { expiresIn: '7d' });
+        const token = jwt.sign(
+            { id: rows[0].id, username: rows[0].username },
+            SECRET,
+            { expiresIn: '7d' }
+        );
         res.json({ token });
     } catch {
         res.status(500).json({ error: 'خطأ بالسيرفر' });
@@ -151,28 +159,34 @@ app.get('/search', auth, async (req, res) => {
 
 // ── إرسال طلب صداقة ───────────────────────────────────────────
 app.post('/friends/request', auth, async (req, res) => {
-    const senderId = parseInt(req.user.id);
+    const senderId   = parseInt(req.user.id);
     const receiverId = parseInt(req.body.receiver_id);
 
-    if (!receiverId || receiverId === senderId)
+    if (!receiverId || isNaN(receiverId))
         return res.status(400).json({ error: 'معرف غير صالح' });
+    if (receiverId === senderId)
+        return res.status(400).json({ error: 'لا يمكنك إضافة نفسك' });
 
     try {
-        // تحقق ما في علاقة موجودة بأي اتجاه
         const existing = await query(
             `SELECT id FROM friends
              WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?)`,
             [senderId, receiverId, receiverId, senderId]
         );
         if (existing.length)
-            return res.status(400).json({ error: 'طلب صداقة موجود مسبقاً أو أنتم أصدقاء' });
+            return res.status(400).json({ error: 'طلب موجود مسبقاً أو أنتم أصدقاء' });
 
-        await query('INSERT INTO friends (sender_id, receiver_id) VALUES (?, ?)', [senderId, receiverId]);
+        await query(
+            'INSERT INTO friends (sender_id, receiver_id) VALUES (?, ?)',
+            [senderId, receiverId]
+        );
 
-        // إشعار فوري إن كان متصل
         const sock = onlineUsers[receiverId];
         if (sock) {
-            io.to(sock).emit('friend_request', { from_id: senderId, from_username: req.user.username });
+            io.to(sock).emit('friend_request', {
+                from_id: senderId,
+                from_username: req.user.username
+            });
         }
         res.json({ success: true });
     } catch {
@@ -194,10 +208,9 @@ app.post('/friends/respond', auth, async (req, res) => {
             return res.status(404).json({ error: 'الطلب غير موجود' });
 
         if (action === 'accepted') {
-            // إشعار للمرسل
-            const req_row = await query('SELECT sender_id FROM friends WHERE id=?', [request_id]);
-            if (req_row.length) {
-                const sock = onlineUsers[req_row[0].sender_id];
+            const rows = await query('SELECT sender_id FROM friends WHERE id=?', [request_id]);
+            if (rows.length) {
+                const sock = onlineUsers[rows[0].sender_id];
                 if (sock) io.to(sock).emit('friend_accepted', { by_username: req.user.username });
             }
         }
@@ -225,12 +238,10 @@ app.get('/friends/requests', auth, async (req, res) => {
 
 // ── جلب قائمة الأصدقاء ────────────────────────────────────────
 app.get('/friends', auth, async (req, res) => {
-    const myId = req.user.id;
+    const myId = parseInt(req.user.id);
     try {
         const rows = await query(
-            `SELECT
-                u.id,
-                u.username
+            `SELECT u.id, u.username
              FROM friends f
              JOIN users u ON u.id = IF(f.sender_id = ?, f.receiver_id, f.sender_id)
              WHERE (f.sender_id = ? OR f.receiver_id = ?)
@@ -244,10 +255,13 @@ app.get('/friends', auth, async (req, res) => {
     }
 });
 
-// ── جلب الرسائل بين شخصين ─────────────────────────────────────
+// ── جلب الرسائل بين شخصين فقط ────────────────────────────────
 app.get('/messages/:friendId', auth, async (req, res) => {
-    const myId     = req.user.id;
+    const myId     = parseInt(req.user.id);
     const friendId = parseInt(req.params.friendId);
+
+    if (isNaN(friendId))
+        return res.status(400).json({ error: 'معرف غير صالح' });
 
     try {
         const rows = await query(
@@ -266,7 +280,7 @@ app.get('/messages/:friendId', auth, async (req, res) => {
             [friendId, myId]
         );
 
-        // أشعر المُرسل إن رسائله اتقرأت
+        // أشعر المُرسل
         const sock = onlineUsers[friendId];
         if (sock) io.to(sock).emit('messages_seen', { by: myId });
 
@@ -278,11 +292,12 @@ app.get('/messages/:friendId', auth, async (req, res) => {
 
 // ── حذف رسالة ─────────────────────────────────────────────────
 app.delete('/messages/:id', auth, async (req, res) => {
-    const myId = req.user.id;
+    const myId  = parseInt(req.user.id);
     const msgId = parseInt(req.params.id);
     try {
         const rows = await query('SELECT * FROM messages WHERE id=?', [msgId]);
-        if (!rows.length) return res.status(404).json({ error: 'الرسالة غير موجودة' });
+        if (!rows.length)
+            return res.status(404).json({ error: 'الرسالة غير موجودة' });
 
         const msg = rows[0];
         if (msg.sender_id === myId) {
@@ -293,7 +308,6 @@ app.delete('/messages/:id', auth, async (req, res) => {
             return res.status(403).json({ error: 'غير مصرح' });
         }
 
-        // إشعار الطرف الآخر
         const otherId = msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
         const sock    = onlineUsers[otherId];
         if (sock) io.to(sock).emit('message_deleted', { id: msgId });
@@ -307,16 +321,19 @@ app.delete('/messages/:id', auth, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 //  Socket.io
 // ═══════════════════════════════════════════════════════════════
-const onlineUsers = {}; // { userId: socketId }
+const onlineUsers = {};
 
 io.on('connection', socket => {
 
     socket.on('register', userId => {
-        onlineUsers[userId] = socket.id;
+        onlineUsers[parseInt(userId)] = socket.id;
     });
 
     socket.on('send_message', async data => {
-        const { sender_id, receiver_id, content } = data;
+        const sender_id   = parseInt(data.sender_id);
+        const receiver_id = parseInt(data.receiver_id);
+        const content     = data.content;
+
         if (!sender_id || !receiver_id || !content) return;
 
         try {
@@ -325,15 +342,15 @@ io.on('connection', socket => {
                 [sender_id, receiver_id, content]
             );
             const message = {
-                id         : result.insertId,
+                id: result.insertId,
                 sender_id,
                 receiver_id,
                 content,
-                is_seen    : 0,
-                created_at : new Date()
+                is_seen   : 0,
+                created_at: new Date()
             };
 
-            // أرسل للمرسل فقط تأكيد
+            // أرسل للمرسل فقط
             socket.emit('receive_message', message);
 
             // أرسل للمستقبل فقط إن كان متصل
@@ -358,4 +375,4 @@ io.on('connection', socket => {
 
 // ─── تشغيل ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`Falcon Meet running on port ${PORT} ✅`));
+server.listen(PORT, () => console.log(`Falcon Office running on port ${PORT} ✅`));
