@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt'); 
+const bcrypt = require('bcryptjs'); 
 const cors = require('cors');
 
 const app = express();
@@ -13,14 +14,15 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(cors());
 
-const SECRET = 'falcon_secret_key';
+const SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT || 3000;
 
 // 1. إعداد قاعدة البيانات
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'falcon_office'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME
 });
 
 // 2. دالة إنشاء الجداول تلقائياً
