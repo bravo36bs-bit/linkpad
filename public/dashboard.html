@@ -840,14 +840,24 @@ document.getElementById(`ri-${reqId}`)?.remove();
     try {
         await fetch(`${API}/friends/respond`, {
             method:'POST',
-            headers:{'Content-Type':'application/json', authorization: token},
+            headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}`
+},
+
             body: JSON.stringify({ request_id: reqId, action })
         });
+          const data = await res.json();
+    console.log('Respond result:', data);
+  } catch (err) {
+    console.error('Fetch error:', err);
+  }
+
         
         if (action === 'accepted') { await loadFriends(); showToast('تمت الإضافة! 🎉'); }
         loadRequests();
-    } catch {}
-}
+    
+};
 
 let searchTimer;
 function renderSearch() {
