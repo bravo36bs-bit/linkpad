@@ -37,6 +37,39 @@ db.query(`SHOW COLUMNS FROM friends LIKE 'sender_id'`, (err, rows) => {
 
 });
 });
+app.get('/init', async (req, res) => {
+    try {
+        await query(`CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+        await query(`CREATE TABLE IF NOT EXISTS friends (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id INT NOT NULL,
+            receiver_id INT NOT NULL,
+            status ENUM('pending','accepted','rejected') DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_pair (sender_id, receiver_id),
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        await query(`CREATE TABLE IF NOT EXISTS messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id INT NOT NULL,
+            receiver_id INT NOT NULL,
+            content TEXT NOT NULL,
+            is_seen TINYINT DEFAULT 0,
+            deleted_by_sender TINYINT DEFAULT 0,
+            deleted_by_receiver TINYINT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        res.json({ success: true, message: 'تم إنشاء الجداول!' });
+    } catch(e) { res.json({ error: e.message }); }
+});
 
 function initTables() {
     db.query(`
