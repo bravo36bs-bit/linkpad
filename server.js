@@ -28,10 +28,14 @@ const db = mysql.createConnection({
 db.connect(err => {
     if (err) { console.error('DB Error:', err.message); return; }
     console.log('Connected to DB ✅');
-    // إصلاح الجداول القديمة
-db.query(`ALTER TABLE friends ADD COLUMN IF NOT EXISTS sender_id INT AFTER id`);
-db.query(`ALTER TABLE friends ADD COLUMN IF NOT EXISTS receiver_id INT AFTER sender_id`);
-    initTables();
+db.query(`SHOW COLUMNS FROM friends LIKE 'sender_id'`, (err, rows) => {
+
+    if (!err && rows.length === 0) {
+        db.query(`ALTER TABLE friends ADD COLUMN sender_id INT`);
+        db.query(`ALTER TABLE friends ADD COLUMN receiver_id INT`);
+}
+
+});
 });
 
 function initTables() {
