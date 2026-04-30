@@ -1,1081 +1,128 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0c10">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Falcon Office</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-<style>
-:root {
-    --bg:      #0a0c10;
-    --surface: #12151c;
-    --surface2:#1a1e28;
-    --surface3:#20253a;
-    --border:  #252a38;
-    --border2: #2e3448;
-    --gold:    #c8a96e;
-    --gold2:   #e8c98e;
-    --gold3:   #a07840;
-    --text:    #e8e4dc;
-    --text2:   #a0a8b8;
-    --muted:   #4a5268;
-    --online:  #2ecc71;
-    --danger:  #e74c3c;
-    --r:       14px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bot: env(safe-area-inset-bottom, 0px);
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-html, body { height:100%; height:100dvh; overflow:hidden; }
-
-body {
-    font-family:'Tajawal', sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    display:flex;
-    flex-direction:column;
-}
-
-/* ══════════════════════════════
-   VIEWS — فقط view واحد يظهر
-══════════════════════════════ */
-.view { display:none; flex-direction:column; height:100%; height:100dvh; }
-.view.active { display:flex; }
-
-/* ══════════════════════════════
-   VIEW 1 — قائمة المحادثات
-══════════════════════════════ */
-#homeView {
-    background:var(--bg);
-}
-
-/* Header */
-.app-bar {
-    padding:calc(var(--safe-top) + 14px) 16px 14px;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-shrink:0;
-}
-.app-logo {
-    flex:1;
-    font-family:'Syne',sans-serif;
-    font-size:1.15rem; font-weight:800;
-    letter-spacing:1.5px;
-    background:linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
-}
-.hdr-btn {
-    width:38px; height:38px; border-radius:12px;
-    background:var(--surface2);
-    border:1px solid var(--border);
-    color:var(--text2);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; font-size:1rem;
-    position:relative; flex-shrink:0;
-    transition:all .2s;
-}
-.hdr-btn:active { background:var(--surface3); transform:scale(.95); }
-.notif-dot {
-    position:absolute; top:-3px; right:-3px;
-    width:10px; height:10px; border-radius:50%;
-    background:var(--gold);
-    border:2px solid var(--bg);
-    display:none;
-}
-
-/* قائمة المحادثات */
-.conv-list {
-    flex:1; overflow-y:auto;
-    padding:8px 0;
-    -webkit-overflow-scrolling:touch;
-}
-.conv-list::-webkit-scrollbar { display:none; }
-
-.conv-item {
-    display:flex; align-items:center; gap:12px;
-    padding:12px 16px;
-    cursor:pointer;
-    transition:background .15s;
-    position:relative;
-}
-.conv-item:active { background:var(--surface); }
-.conv-item.unread::after {
-    content:'';
-    position:absolute; left:16px; top:50%; transform:translateY(-50%);
-    width:8px; height:8px; border-radius:50%;
-    background:var(--gold);
-}
-
-.ava {
-    width:50px; height:50px; border-radius:50%;
-    background:linear-gradient(135deg, var(--surface3), var(--surface2));
-    border:1.5px solid var(--border2);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Syne',sans-serif;
-    font-size:1.1rem; font-weight:700;
-    color:var(--gold2);
-    flex-shrink:0;
-    position:relative;
-}
-.ava .online-dot {
-    position:absolute; bottom:1px; right:1px;
-    width:11px; height:11px; border-radius:50%;
-    background:var(--online);
-    border:2px solid var(--bg);
-    display:none;
-}
-.conv-info { flex:1; min-width:0; }
-.conv-name { font-size:.95rem; font-weight:600; margin-bottom:3px; }
-.conv-last { font-size:.8rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.conv-meta { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-.conv-time { font-size:.72rem; color:var(--muted); }
-.conv-badge {
-    background:var(--gold);
-    color:#0a0c10;
-    border-radius:10px;
-    padding:1px 7px;
-    font-size:.72rem; font-weight:700;
-    display:none;
-}
-
-.empty-home {
-    flex:1; display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    gap:12px; padding:40px;
-    text-align:center;
-}
-.empty-home .ico { font-size:3rem; opacity:.4; }
-.empty-home h3 { font-size:1rem; color:var(--text2); }
-.empty-home p  { font-size:.82rem; color:var(--muted); line-height:1.7; }
-
-/* Bottom Nav */
-.bottom-nav {
-    padding:10px 0 calc(var(--safe-bot) + 10px);
-    background:var(--surface);
-    border-top:1px solid var(--border);
-    display:flex;
-    flex-shrink:0;
-}
-.nav-btn {
-    flex:1; display:flex; flex-direction:column;
-    align-items:center; gap:3px;
-    background:none; border:none;
-    cursor:pointer; padding:6px 0;
-    color:var(--muted);
-    font-family:'Tajawal',sans-serif;
-    font-size:.68rem;
-    transition:color .2s;
-    position:relative;
-}
-.nav-btn .nav-ico { font-size:1.3rem; }
-.nav-btn.active { color:var(--gold); }
-.nav-btn .nav-badge {
-    position:absolute; top:2px; right:calc(50% - 12px);
-    background:var(--gold); color:#0a0c10;
-    border-radius:50%; width:16px; height:16px;
-    font-size:.62rem; font-weight:700;
-    display:none; align-items:center; justify-content:center;
-}
-
-/* ══════════════════════════════
-   VIEW 2 — المحادثة
-══════════════════════════════ */
-#chatView { background:var(--bg); }
-
-.chat-bar {
-    padding:calc(var(--safe-top) + 10px) 12px 10px;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    display:flex; align-items:center; gap:10px;
-    flex-shrink:0;
-}
-.back-btn {
-    width:36px; height:36px; border-radius:10px;
-    background:var(--surface2); border:1px solid var(--border);
-    color:var(--text2); font-size:1rem;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-}
-.back-btn:active { transform:scale(.92); }
-.chat-ava {
-    width:38px; height:38px; border-radius:50%;
-    background:linear-gradient(135deg, var(--surface3), var(--surface2));
-    border:1.5px solid var(--border2);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Syne',sans-serif;
-    font-size:.9rem; font-weight:700; color:var(--gold2);
-    flex-shrink:0;
-}
-.chat-info { flex:1; min-width:0; }
-.chat-name { font-size:.95rem; font-weight:600; }
-.chat-status { font-size:.72rem; color:var(--muted); margin-top:1px; }
-.chat-opts {
-    width:36px; height:36px; border-radius:10px;
-    background:none; border:none;
-    color:var(--text2); font-size:1.2rem;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-}
-
-/* الرسائل */
-.msgs-wrap {
-    flex:1; overflow-y:auto;
-    padding:16px 14px;
-    display:flex; flex-direction:column;
-    gap:6px;
-    -webkit-overflow-scrolling:touch;
-}
-.msgs-wrap::-webkit-scrollbar { display:none; }
-
-/* تاريخ */
-.date-sep {
-    text-align:center;
-    font-size:.72rem; color:var(--muted);
-    margin:8px 0;
-}
-
-/* رسالة */
-.mw { display:flex; flex-direction:column; max-width:78%; }
-.mw.me  { align-self:flex-start; }
-.mw.you { align-self:flex-end; }
-
-.bubble {
-    padding:10px 13px;
-    border-radius:18px;
-    font-size:.92rem; line-height:1.55;
-    word-break:break-word;
-    position:relative;
-    animation:pop .18s cubic-bezier(.16,1,.3,1);
-}
-@keyframes pop {
-    from { opacity:0; transform:scale(.94) translateY(4px); }
-    to   { opacity:1; transform:scale(1) translateY(0); }
-}
-.mw.me  .bubble {
-    background:linear-gradient(135deg, var(--gold3), var(--gold));
-    color:#0a0c10;
-    border-bottom-right-radius:5px;
-}
-.mw.you .bubble {
-    background:var(--surface);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-bottom-left-radius:5px;
-}
-
-.bubble:active { opacity:.85; }
-
-/* Long press menu */
-.msg-menu {
-    display:none;
-    position:fixed; z-index:999;
-    background:var(--surface2);
-    border:1px solid var(--border2);
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:0 8px 32px rgba(0,0,0,.5);
-    animation:pop .2s ease;
-}
-.msg-menu.show { display:block; }
-.menu-item {
-    padding:13px 20px;
-    font-size:.9rem; color:var(--text);
-    cursor:pointer;
-    display:flex; align-items:center; gap:10px;
-    transition:background .15s;
-}
-.menu-item:active { background:var(--surface3); }
-.menu-item.red { color:var(--danger); }
-.menu-sep { height:1px; background:var(--border); }
-
-.meta {
-    display:flex; align-items:center; gap:4px;
-    margin-top:3px; padding:0 4px;
-}
-.meta .time { font-size:.67rem; color:var(--muted); }
-.meta .seen { font-size:.75rem; }
-.mw.me .seen { color:var(--gold); }
-
-/* حقل الإرسال */
-.input-wrap {
-    padding:10px 12px calc(var(--safe-bot) + 10px);
-    background:var(--surface);
-    border-top:1px solid var(--border);
-    display:flex; align-items:flex-end; gap:8px;
-    flex-shrink:0;
-}
-.msg-field {
-    flex:1;
-    background:var(--surface2);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:11px 15px;
-    color:var(--text);
-    font-family:'Tajawal',sans-serif;
-    font-size:.92rem; outline:none;
-    resize:none;
-    max-height:120px;
-    -webkit-appearance:none;
-    transition:border-color .2s;
-    line-height:1.4;
-}
-.msg-field:focus { border-color:var(--gold3); }
-.msg-field::placeholder { color:var(--muted); }
-.send-btn {
-    width:42px; height:42px; border-radius:50%;
-    background:linear-gradient(135deg, var(--gold3), var(--gold));
-    border:none; color:#0a0c10;
-    font-size:1.1rem;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-    transition:transform .15s;
-}
-.send-btn:active { transform:scale(.9); }
-
-/* ══════════════════════════════
-   VIEW 3 — الأصدقاء / الطلبات
-══════════════════════════════ */
-#friendsView { background:var(--bg); }
-
-.section-bar {
-    padding:calc(var(--safe-top) + 14px) 16px 14px;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    display:flex; align-items:center; gap:12px;
-    flex-shrink:0;
-}
-.section-title {
-    flex:1;
-    font-family:'Syne',sans-serif;
-    font-size:1.05rem; font-weight:700;
-    color:var(--text);
-    letter-spacing:.5px;
-}
-
-/* Search */
-.search-bar {
-    padding:12px 16px;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    flex-shrink:0;
-}
-.search-inp {
-    width:100%;
-    background:var(--surface2);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px 14px;
-    color:var(--text);
-    font-family:'Tajawal',sans-serif;
-    font-size:.9rem; outline:none;
-    -webkit-appearance:none;
-}
-.search-inp::placeholder { color:var(--muted); }
-.search-inp:focus { border-color:var(--gold3); }
-
-/* قائمة */
-.f-list {
-    flex:1; overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-}
-.f-list::-webkit-scrollbar { display:none; }
-
-.f-sec-label {
-    padding:12px 16px 6px;
-    font-size:.72rem; color:var(--muted);
-    letter-spacing:1px; text-transform:uppercase;
-}
-
-.f-item {
-    display:flex; align-items:center; gap:12px;
-    padding:12px 16px;
-    cursor:pointer;
-    transition:background .15s;
-}
-.f-item:active { background:var(--surface); }
-
-.f-info { flex:1; min-width:0; }
-.f-name { font-size:.92rem; font-weight:600; }
-.f-sub  { font-size:.76rem; color:var(--muted); margin-top:2px; }
-
-.f-action {
-    padding:7px 16px;
-    border-radius:10px;
-    border:none; cursor:pointer;
-    font-family:'Tajawal',sans-serif;
-    font-size:.82rem; font-weight:600;
-    transition:all .2s; flex-shrink:0;
-}
-.f-action.add {
-    background:linear-gradient(135deg,var(--gold3),var(--gold));
-    color:#0a0c10;
-}
-.f-action.add:disabled { opacity:.5; }
-.f-action.acc { background:rgba(200,169,110,.15); color:var(--gold2); border:1px solid rgba(200,169,110,.3); }
-.f-action.rej { background:rgba(231,76,60,.1); color:var(--danger); border:1px solid rgba(231,76,60,.2); }
-
-.empty-f {
-    padding:40px 20px;
-    text-align:center; color:var(--muted);
-    font-size:.85rem; line-height:1.8;
-}
-
-/* ══════════════════════════════
-   VIEW 4 — الإعدادات
-══════════════════════════════ */
-#settingsView { background:var(--bg); }
-
-.settings-list {
-    flex:1; overflow-y:auto; padding:16px;
-    display:flex; flex-direction:column; gap:10px;
-}
-.setting-item {
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:16px;
-    display:flex; align-items:center; gap:12px;
-    cursor:pointer;
-    transition:background .15s;
-}
-.setting-item:active { background:var(--surface2); }
-.setting-ico { font-size:1.3rem; width:36px; text-align:center; }
-.setting-info { flex:1; }
-.setting-name { font-size:.92rem; font-weight:600; }
-.setting-desc { font-size:.76rem; color:var(--muted); margin-top:2px; }
-.setting-item.danger .setting-name { color:var(--danger); }
-
-/* Profile card */
-.profile-card {
-    background:linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
-    border:1px solid var(--border);
-    border-radius:18px;
-    padding:24px 16px;
-    text-align:center;
-    margin-bottom:6px;
-}
-.profile-ava {
-    width:72px; height:72px; border-radius:50%;
-    background:linear-gradient(135deg, var(--gold3), var(--gold));
-    margin:0 auto 12px;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Syne',sans-serif;
-    font-size:1.6rem; font-weight:800; color:#0a0c10;
-    border:3px solid rgba(200,169,110,.3);
-}
-.profile-name {
-    font-family:'Syne',sans-serif;
-    font-size:1.1rem; font-weight:700;
-}
-.profile-sub { font-size:.78rem; color:var(--muted); margin-top:4px; }
-
-/* ══════════════════════════════
-   OVERLAY — Toast
-══════════════════════════════ */
-.toast {
-    position:fixed;
-    bottom:calc(var(--safe-bot) + 80px);
-    left:50%; transform:translateX(-50%) translateY(20px);
-    background:var(--surface2);
-    border:1px solid var(--border2);
-    color:var(--text);
-    padding:10px 18px;
-    border-radius:100px;
-    font-size:.84rem;
-    white-space:nowrap;
-    z-index:998;
-    opacity:0;
-    pointer-events:none;
-    transition:all .3s cubic-bezier(.16,1,.3,1);
-    box-shadow:0 8px 24px rgba(0,0,0,.4);
-}
-.toast.show {
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-}
-
-/* ══════════════════════════════
-   Misc
-══════════════════════════════ */
-.divider { height:1px; background:var(--border); margin:0 16px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Falcon Office - Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        /* ستايل بسيط وسريع للتجربة - يمكنك تعديله لاحقاً */
+        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; }
+        .sidebar { width: 300px; background: #1e1e1e; border-left: 1px solid #333; display: flex; flex-direction: column; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #121212; }
+        .friend-item { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; transition: 0.3s; }
+        .friend-item:hover { background: #2d2d2d; }
+        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 10px; max-width: 70%; }
+        .sent { background: #ffcc00; color: #000; align-self: flex-start; }
+        .received { background: #333; color: #fff; align-self: flex-end; }
+        .input-box { padding: 20px; background: #1e1e1e; display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #333; color: white; }
+        button { padding: 10px 20px; background: #ffcc00; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
 </head>
 <body>
 
-<!-- ═══ VIEW 1: المحادثات ═══ -->
-<div class="view active" id="homeView">
-    <div class="app-bar">
-        <span class="app-logo">🦅 FALCON OFFICE</span>
-        <button class="hdr-btn" onclick="goView('friendsView')" title="إضافة صديق">
-            <span>➕</span>
-        </button>
-        <button class="hdr-btn" id="reqBtn" onclick="goView('friendsView', 'requests')" title="الطلبات">
-            <span>🔔</span>
-            <span class="notif-dot" id="reqDot"></span>
-        </button>
-    </div>
-
-    <div class="conv-list" id="convList">
-        <div class="empty-home" id="emptyHome">
-            <div class="ico">🦅</div>
-            <h3>لا توجد محادثات بعد</h3>
-            <p>أضف أصدقاء من زر ➕<br>لبدء محادثاتك</p>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <button class="nav-btn active" onclick="goView('homeView')">
-            <span class="nav-ico">💬</span>
-            <span>المحادثات</span>
-        </button>
-        <button class="nav-btn" onclick="goView('friendsView')">
-            <span class="nav-ico">👥</span>
-            <span>الأصدقاء</span>
-            <span class="nav-badge" id="navReqBadge"></span>
-        </button>
-        <button class="nav-btn" onclick="goView('settingsView')">
-            <span class="nav-ico">⚙️</span>
-            <span>الإعدادات</span>
-        </button>
-    </div>
+<div class="sidebar">
+    <div style="padding: 20px; background: #ffcc00; color: #000; font-weight: bold;">الأصدقاء</div>
+    <div id="friends-list"></div>
 </div>
 
-<!-- ═══ VIEW 2: المحادثة ═══ -->
-<div class="view" id="chatView">
-    <div class="chat-bar">
-        <button class="back-btn" onclick="goView('homeView')">←</button>
-        <div class="chat-ava" id="chatAva"></div>
-        <div class="chat-info">
-            <div class="chat-name" id="chatName"></div>
-            <div class="chat-status" id="chatStatus">...</div>
-        </div>
-    </div>
-    <div class="msgs-wrap" id="msgsWrap"></div>
-    <div class="input-wrap">
-        <textarea class="msg-field" id="msgField" placeholder="اكتب رسالة..." rows="1"
-            oninput="autoResize(this)"
-            onkeypress="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
-        </textarea>
-        <button class="send-btn" onclick="sendMsg()">↑</button>
+<div class="chat-area">
+    <div id="chat-header" style="padding: 15px; background: #1e1e1e; border-bottom: 1px solid #333;">اختر صديقاً لبدء المحادثة</div>
+    <div class="messages" id="messages-container"></div>
+    <div class="input-box">
+        <input type="text" id="msg-input" placeholder="اكتب رسالتك هنا...">
+        <button onclick="sendMessage()">إرسال</button>
     </div>
 </div>
-
-<!-- ═══ VIEW 3: الأصدقاء ═══ -->
-<div class="view" id="friendsView">
-    <div class="section-bar">
-        <button class="back-btn" onclick="goView('homeView')" style="background:none;border:none;">←</button>
-        <span class="section-title" id="friendsTitle">الأصدقاء</span>
-    </div>
-    <!-- Tabs -->
-    <div style="display:flex; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0;">
-        <button style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid var(--gold);color:var(--gold);font-family:Tajawal,sans-serif;font-size:.88rem;cursor:pointer;" id="ftab1" onclick="switchFTab('friends')">أصدقائي</button>
-        <button style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.88rem;cursor:pointer;" id="ftab2" onclick="switchFTab('requests')">الطلبات <span id="reqCount"></span></button>
-        <button style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.88rem;cursor:pointer;" id="ftab3" onclick="switchFTab('search')">بحث</button>
-    </div>
-    <div class="f-list" id="fList"></div>
-    <div class="bottom-nav">
-        <button class="nav-btn" onclick="goView('homeView')">
-            <span class="nav-ico">💬</span><span>المحادثات</span>
-        </button>
-        <button class="nav-btn active" onclick="goView('friendsView')">
-            <span class="nav-ico">👥</span><span>الأصدقاء</span>
-            <span class="nav-badge" id="navReqBadge2"></span>
-        </button>
-        <button class="nav-btn" onclick="goView('settingsView')">
-            <span class="nav-ico">⚙️</span><span>الإعدادات</span>
-        </button>
-    </div>
-</div>
-
-<!-- ═══ VIEW 4: الإعدادات ═══ -->
-<div class="view" id="settingsView">
-    <div class="section-bar">
-        <button class="back-btn" onclick="goView('homeView')" style="background:none;border:none;">←</button>
-        <span class="section-title">الإعدادات</span>
-    </div>
-    <div class="settings-list">
-        <div class="profile-card">
-            <div class="profile-ava" id="profileAva"></div>
-            <div class="profile-name" id="profileName"></div>
-            <div class="profile-sub">عضو في Falcon Office</div>
-        </div>
-        <div class="setting-item danger" onclick="logout()">
-            <span class="setting-ico">🚪</span>
-            <div class="setting-info">
-                <div class="setting-name">تسجيل الخروج</div>
-                <div class="setting-desc">مسح بيانات الجلسة</div>
-            </div>
-        </div>
-    </div>
-    <div class="bottom-nav">
-        <button class="nav-btn" onclick="goView('homeView')">
-            <span class="nav-ico">💬</span><span>المحادثات</span>
-        </button>
-        <button class="nav-btn" onclick="goView('friendsView')">
-            <span class="nav-ico">👥</span><span>الأصدقاء</span>
-        </button>
-        <button class="nav-btn active" onclick="goView('settingsView')">
-            <span class="nav-ico">⚙️</span><span>الإعدادات</span>
-        </button>
-    </div>
-</div>
-
-<!-- Context Menu -->
-<div class="msg-menu" id="msgMenu">
-    <div class="menu-item" onclick="copyMsg()">📋 نسخ</div>
-    <div class="menu-sep"></div>
-    <div class="menu-item red" id="delMenuItem" onclick="deleteMsg()">🗑️ حذف</div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════
-//  Config
-// ════════════════════════════════
-const API = 'https://linkpad-chat.onrender.com';
-const token = localStorage.getItem('fo_token');
-if (!token) location.href = 'login.html';
+    const API = 'http://localhost:3000';
+    const socket = io(API);
+    const currentUser = JSON.parse(localStorage.getItem('fo_user'));
+    let selectedFriend = null;
 
-let myId, myName;
-try {
-    const p = JSON.parse(atob(token.split('.')[1]));
-    myId = parseInt(p.id);
-    myName = p.username;
-} catch { location.href = 'login.html'; }
-
-// Profile
-document.getElementById('profileAva').textContent  = myName[0].toUpperCase();
-document.getElementById('profileName').textContent = myName;
-
-let socket;
-let currentFriend = null;
-let friendsList   = [];
-let selectedMsgId = null;
-let selectedMsgContent = '';
-let fTab = 'friends';
-
-// ════════════════════════════════
-//  Navigation
-// ════════════════════════════════
-function goView(viewId, subTab) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
-    if (viewId === 'friendsView') {
-        switchFTab(subTab || fTab || 'friends');
+    // الحماية: إذا لم يسجل دخول يرجع للصفحة الرئيسية[cite: 3]
+    if (!currentUser) {
+        window.location.href = 'login.html';
     }
-    if (viewId === 'homeView') loadFriends();
-}
 
-// ════════════════════════════════
-//  Socket
-// ════════════════════════════════
-function initSocket() {
-    socket = io(API, { transports: ['websocket'] });
+    // دالة موحدة لطلبات السيرفر لضمان إرسال التوكن صح[cite: 1, 3]
+    async function apiRequest(endpoint, options = {}) {
+        const token = localStorage.getItem('fo_token');
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // تم التعديل ليتوافق مع السيرفر
+        };
 
-    socket.on('connect', () => {
-        socket.emit('register', myId);
-    });
+        const response = await fetch(`${API}${endpoint}`, { ...options, headers });
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
+        return response.json();
+    }
 
-    socket.on('receive_message', msg => {
-        if (currentFriend && (
-            (msg.sender_id == currentFriend.id && msg.receiver_id == myId) ||
-            (msg.sender_id == myId && msg.receiver_id == currentFriend.id)
-        )) {
-            appendMsg(msg);
+    // ربط المستخدم بالسوكيت
+    socket.emit('register_socket', currentUser.id);
+
+    // جلب الأصدقاء عند تحميل الصفحة[cite: 3]
+    async function loadFriends() {
+        const friends = await apiRequest('/friends');[cite: 1]
+        const list = document.getElementById('friends-list');
+        list.innerHTML = '';
+        if (friends) {
+            friends.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerText = f.username;
+                div.onclick = () => openChat(f);
+                list.appendChild(div);
+            });
+        }
+    }
+
+    function openChat(friend) {
+        selectedFriend = friend;
+        document.getElementById('chat-header').innerText = `المحادثة مع: ${friend.username}`;
+        document.getElementById('messages-container').innerHTML = ''; // تنظيف الشاشة
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('msg-input');
+        const msg = input.value.trim();
+        if (!msg || !selectedFriend) return;
+
+        const data = {
+            sender_id: currentUser.id,
+            receiver_id: selectedFriend.id,
+            message: msg
+        };
+
+        socket.emit('send_message', data);[cite: 1]
+        appendMessage(msg, 'sent');
+        input.value = '';
+    }
+
+    socket.on('receive_message', (data) => {
+        if (selectedFriend && data.sender_id === selectedFriend.id) {
+            appendMessage(data.message, 'received');
         } else {
-            // إشعار رسالة جديدة
-            const name = friendsList.find(f => f.id == msg.sender_id)?.username || '...';
-            showToast(`رسالة من ${name} 💬`);
-            markConvUnread(msg.sender_id);
+            console.log("رسالة جديدة من مستخدم آخر");
         }
     });
 
-    socket.on('messages_seen', ({ by }) => {
-        if (currentFriend && by == currentFriend.id) {
-            document.querySelectorAll('.seen').forEach(el => el.textContent = '✓✓');
-        }
-    });
-
-    socket.on('message_deleted', ({ id }) => {
-        document.getElementById(`mw-${id}`)?.remove();
-    });
-
-    socket.on('friend_request', data => {
-        showToast(`طلب صداقة من ${data.from_username} 🔔`);
-        loadRequests();
-    });
-
-    socket.on('friend_accepted', data => {
-        showToast(`${data.by_username} قبل طلبك! 🎉`);
-        loadFriends();
-    });
-}
-
-// ════════════════════════════════
-//  Friends
-// ════════════════════════════════
-async function loadFriends() {
-    try {
-        const r = await fetch(`${API}/friends`, { headers: { authorization: token } });
-        const list = await r.json();
-        friendsList = Array.isArray(list) ? list : [];
-        renderConvList();
-    } catch {}
-}
-
-function renderConvList() {
-    const el = document.getElementById('convList');
-    const empty = document.getElementById('emptyHome');
-    if (!friendsList.length) {
-        empty.style.display = 'flex';
-        el.innerHTML = '';
-        el.appendChild(empty);
-        return;
+    function appendMessage(text, type) {
+        const container = document.getElementById('messages-container');
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = text;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
-    empty.style.display = 'none';
-    el.innerHTML = friendsList.map(f => `
-        <div class="conv-item" id="conv-${f.id}" onclick="openChat(${f.id},'${f.username}')">
-            <div class="ava">${f.username[0].toUpperCase()}</div>
-            <div class="conv-info">
-                <div class="conv-name">${f.username}</div>
-                <div class="conv-last" id="last-${f.id}">اضغط للدردشة</div>
-            </div>
-            <div class="conv-meta">
-                <div class="conv-time" id="time-${f.id}"></div>
-                <div class="conv-badge" id="badge-${f.id}"></div>
-            </div>
-        </div>
-    `).join('');
-}
 
-function markConvUnread(friendId) {
-    const conv = document.getElementById(`conv-${friendId}`);
-    if (conv) conv.classList.add('unread');
-    const badge = document.getElementById(`badge-${friendId}`);
-    if (badge) { badge.style.display = 'flex'; }
-}
-
-// ════════════════════════════════
-//  Friend Tabs
-// ════════════════════════════════
-function switchFTab(tab) {
-    fTab = tab;
-    ['friends','requests','search'].forEach((t,i) => {
-        const btn = document.getElementById(`ftab${i+1}`);
-        btn.style.borderBottomColor = t===tab ? 'var(--gold)' : 'transparent';
-        btn.style.color = t===tab ? 'var(--gold)' : 'var(--muted)';
-    });
-    if (tab === 'friends')   renderFriendsList();
-    if (tab === 'requests')  loadRequests();
-    if (tab === 'search')    renderSearch();
-}
-
-function renderFriendsList() {
-    const el = document.getElementById('fList');
-    if (!friendsList.length) {
-        el.innerHTML = '<div class="empty-f">لا يوجد أصدقاء بعد<br>استخدم البحث لإضافة أصدقاء</div>';
-        return;
-    }
-    el.innerHTML = '<div class="f-sec-label">أصدقاؤك</div>' +
-        friendsList.map(f => `
-            <div class="f-item" onclick="openChat(${f.id},'${f.username}')">
-                <div class="ava" style="width:42px;height:42px;">${f.username[0].toUpperCase()}</div>
-                <div class="f-info">
-                    <div class="f-name">${f.username}</div>
-                    <div class="f-sub">صديق</div>
-                </div>
-                <button class="f-action add" onclick="event.stopPropagation();openChat(${f.id},'${f.username}')">محادثة</button>
-            </div>
-        `).join('');
-}
-
-async function loadRequests() {
-    try {
-        const r = await fetch(`${API}/friends/requests`, { headers: { authorization: token } });
-        const list = await r.json();
-
-        // badge
-        const count = Array.isArray(list) ? list.length : 0;
-        ['reqDot','navReqBadge','navReqBadge2'].forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (count > 0) { el.style.display = 'flex'; el.textContent = count > 9 ? '9+' : count; }
-            else           { el.style.display = 'none'; }
-        });
-        document.getElementById('reqCount').textContent = count ? ` (${count})` : '';
-
-        if (fTab !== 'requests') return;
-        const el = document.getElementById('fList');
-        if (!count) { el.innerHTML = '<div class="empty-f">لا توجد طلبات صداقة</div>'; return; }
-        el.innerHTML = '<div class="f-sec-label">طلبات واردة</div>' +
-            list.map(req => `
-                <div class="f-item" id="ri-${req.id}">
-                    <div class="ava" style="width:42px;height:42px;">${req.username[0].toUpperCase()}</div>
-                    <div class="f-info">
-                        <div class="f-name">${req.username}</div>
-                        <div class="f-sub">يريد إضافتك</div>
-                    </div>
-                    <div style="display:flex;gap:6px;">
-                        <button class="f-action acc" onclick="respond(${req.id},'accepted')">قبول</button>
-                        <button class="f-action rej" onclick="respond(${req.id},'rejected')">رفض</button>
-                    </div>
-                </div>
-            `).join('');
-    } catch {}
-}
-
-async function respond(reqId, action) {
-document.getElementById(`ri-${reqId}`)?.remove();
-    try {
-       const res = await fetch(`${API}/friends/respond`, {
-            method:'POST',
-            headers: {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${token}`
-},
-
-            body: JSON.stringify({ request_id: reqId, action })
-        });
-          const data = await res.json();
-    console.log('Respond result:', data);
-  } catch (err) {
-    console.error('Fetch error:', err);
-  }
-
-        
-        if (action === 'accepted') { await loadFriends(); showToast('تمت الإضافة! 🎉'); }
-        loadRequests();
-    
-};
-
-let searchTimer;
-function renderSearch() {
-    document.getElementById('fList').innerHTML = `
-        <div style="padding:12px 16px;">
-            <input class="search-inp" id="sInp" placeholder="ابحث باسم المستخدم..." oninput="doSearch()" autocomplete="off">
-        </div>
-        <div id="sResults"></div>
-    `;
-    setTimeout(() => document.getElementById('sInp')?.focus(), 100);
-}
-
-function doSearch() {
-    clearTimeout(searchTimer);
-    const q = document.getElementById('sInp')?.value.trim();
-    if (!q) { document.getElementById('sResults').innerHTML = ''; return; }
-    searchTimer = setTimeout(() => runSearch(q), 400);
-}
-
-async function runSearch(q) {
-    try {
-        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: { authorization: token } });
-        const list = await r.json();
-        const el = document.getElementById('sResults');
-        if (!Array.isArray(list) || !list.length) { el.innerHTML = '<div class="empty-f">لا يوجد نتائج</div>'; return; }
-        el.innerHTML = list.map(u => `
-            <div class="f-item">
-                <div class="ava" style="width:42px;height:42px;">${u.username[0].toUpperCase()}</div>
-                <div class="f-info"><div class="f-name">${u.username}</div></div>
-                <button class="f-action add" id="ab-${u.id}" onclick="sendReq(${u.id})">إضافة</button>
-            </div>
-        `).join('');
-    } catch {}
-}
-
-async function sendReq(friendId) {
-    const btn = document.getElementById(`ab-${friendId}`);
-    if (btn) { btn.disabled = true; btn.textContent = 'تم ✓'; }
-    try {
-        const r = await fetch(`${API}/friends/request`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json', authorization: token},
-            body: JSON.stringify({ receiver_id: friendId })
-        });
-        const d = await r.json();
-        if (!r.ok) { showToast(d.error || 'خطأ'); if (btn) { btn.disabled=false; btn.textContent='إضافة'; } }
-        else showToast('تم إرسال الطلب ✅');
-    } catch {}
-}
-
-// ════════════════════════════════
-//  Chat
-// ════════════════════════════════
-async function openChat(friendId, friendUsername) {
-    currentFriend = { id: friendId, username: friendUsername };
-    localStorage.setItem('fo_cf', JSON.stringify(currentFriend));
-
-    document.getElementById('chatAva').textContent   = friendUsername[0].toUpperCase();
-    document.getElementById('chatName').textContent  = friendUsername;
-    document.getElementById('chatStatus').textContent = 'جاري التحميل...';
-
-    // مسح unread
-    document.getElementById(`conv-${friendId}`)?.classList.remove('unread');
-    const badge = document.getElementById(`badge-${friendId}`);
-    if (badge) badge.style.display = 'none';
-
-    goView('chatView');
-    await loadMsgs();
-}
-
-async function loadMsgs() {
-    if (!currentFriend) return;
-    try {
-        const r = await fetch(`${API}/messages/${currentFriend.id}`, { headers: { authorization: token } });
-        const list = await r.json();
-        const el = document.getElementById('msgsWrap');
-        el.innerHTML = '';
-        if (Array.isArray(list)) list.forEach(m => appendMsg(m, false));
-        el.scrollTop = el.scrollHeight;
-        document.getElementById('chatStatus').textContent = `${currentFriend.username}`;
-    } catch {
-        document.getElementById('chatStatus').textContent = 'خطأ في التحميل';
-    }
-}
-
-function appendMsg(msg, scroll = true) {
-    const el     = document.getElementById('msgsWrap');
-    const isMine = msg.sender_id == myId;
-    const time   = new Date(msg.created_at).toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
-    const seen   = isMine ? `<span class="seen">${msg.is_seen ? '✓✓' : '✓'}</span>` : '';
-
-    const div = document.createElement('div');
-    div.className = `mw ${isMine ? 'me' : 'you'}`;
-    div.id        = `mw-${msg.id}`;
-
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = msg.content;
-
-    // Long press
-    let pressTimer;
-    bubble.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(() => showMsgMenu(msg.id, msg.content, isMine, bubble), 500);
-    }, { passive:true });
-    bubble.addEventListener('touchend',   () => clearTimeout(pressTimer));
-    bubble.addEventListener('touchmove',  () => clearTimeout(pressTimer));
-    bubble.addEventListener('contextmenu', e => { e.preventDefault(); showMsgMenu(msg.id, msg.content, isMine, bubble); });
-
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.innerHTML = `<span class="time">${time}</span>${seen}`;
-
-    div.appendChild(bubble);
-    div.appendChild(meta);
-    el.appendChild(div);
-    if (scroll) el.scrollTop = el.scrollHeight;
-}
-
-function sendMsg() {
-    const field   = document.getElementById('msgField');
-    const content = field.value.trim();
-    if (!content || !currentFriend) return;
-    field.value = '';
-    field.style.height = '';
-    socket.emit('send_message', {
-        sender_id  : myId,
-        receiver_id: currentFriend.id,
-        content
-    });
-}
-
-function autoResize(el) {
-    el.style.height = '';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-// ════════════════════════════════
-//  Message Menu
-// ════════════════════════════════
-let menuMsgId = null;
-let menuMsgContent = '';
-
-function showMsgMenu(id, content, isMine, bubble) {
-    menuMsgId = id;
-    menuMsgContent = content;
-    const menu = document.getElementById('msgMenu');
-    const delItem = document.getElementById('delMenuItem');
-    delItem.style.display = isMine ? 'flex' : 'none';
-
-    const rect = bubble.getBoundingClientRect();
-    menu.style.top  = (rect.bottom + 8) + 'px';
-    menu.style.right = '16px';
-    menu.classList.add('show');
-
-    setTimeout(() => document.addEventListener('touchstart', closeMsgMenu, { once:true }), 100);
-}
-
-function closeMsgMenu() {
-    document.getElementById('msgMenu').classList.remove('show');
-}
-
-function copyMsg() {
-    navigator.clipboard?.writeText(menuMsgContent).then(() => showToast('تم النسخ 📋'));
-    closeMsgMenu();
-}
-
-async function deleteMsg() {
-    if (!menuMsgId) return;
-    closeMsgMenu();
-    try {
-        await fetch(`${API}/messages/${menuMsgId}`, {
-            method:'DELETE',
-            headers:{ authorization: token }
-        });
-        document.getElementById(`mw-${menuMsgId}`)?.remove();
-    } catch {}
-}
-
-// ════════════════════════════════
-//  Toast
-// ════════════════════════════════
-let toastTimer;
-function showToast(msg) {
-    clearTimeout(toastTimer);
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-// ════════════════════════════════
-//  Logout
-// ════════════════════════════════
-function logout() {
-    if (confirm('هل تريد تسجيل الخروج؟')) {
-        localStorage.clear();
-        location.href = 'login.html';
-    }
-}
-
-// ════════════════════════════════
-//  Init
-// ════════════════════════════════
-initSocket();
-loadFriends();
-loadRequests();
-
-// استعادة المحادثة
-const saved = localStorage.getItem('fo_cf');
-if (saved) {
-    try {
-        const cf = JSON.parse(saved);
-        // سنفتح بعد تحميل الأصدقاء
-        setTimeout(() => {
-            if (friendsList.find(f => f.id == cf.id)) openChat(cf.id, cf.username);
-        }, 800);
-    } catch {}
-}
+    loadFriends();
 </script>
+
 </body>
 </html>
