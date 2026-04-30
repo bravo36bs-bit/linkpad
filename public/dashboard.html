@@ -838,7 +838,7 @@ async function loadRequests() {
 async function respond(reqId, action) {
 document.getElementById(`ri-${reqId}`)?.remove();
     try {
-        await fetch(`${API}/friends/respond`, {
+       const res = await fetch(`${API}/friends/respond`, {
             method:'POST',
             headers: {
   'Content-Type': 'application/json',
