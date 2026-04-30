@@ -119,10 +119,11 @@ app.post('/signup', async (req, res) => {
     try {
         await query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password]);
         res.json({ success: true });
-    } catch (err) {
+   } catch (err) {
+        console.error('signup error:', err.message);
         if (err.code === 'ER_DUP_ENTRY')
             return res.status(400).json({ error: 'اسم المستخدم مستخدم مسبقاً' });
-        res.status(500).json({ error: 'خطأ بالسيرفر' });
+        res.status(500).json({ error: err.message });
     }
 });
 
