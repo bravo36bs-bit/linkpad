@@ -836,13 +836,14 @@ async function loadRequests() {
 }
 
 async function respond(reqId, action) {
+document.getElementById(`ri-${reqId}`)?.remove();
     try {
         await fetch(`${API}/friends/respond`, {
             method:'POST',
             headers:{'Content-Type':'application/json', authorization: token},
             body: JSON.stringify({ request_id: reqId, action })
         });
-        document.getElementById(`ri-${reqId}`)?.remove();
+        
         if (action === 'accepted') { await loadFriends(); showToast('تمت الإضافة! 🎉'); }
         loadRequests();
     } catch {}
