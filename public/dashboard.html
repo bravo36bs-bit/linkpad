@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Falcon Office - Dashboard</title>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        /* ستايل بسيط وسريع للتجربة - يمكنك تعديله لاحقاً */
-        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; }
+        body { background: #121212; color: #e0e0e0; font-family: sans-serif; margin: 0; display: flex; height: 100vh; }
         .sidebar { width: 300px; background: #1e1e1e; border-left: 1px solid #333; display: flex; flex-direction: column; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #121212; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; }
         .friend-item { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; transition: 0.3s; }
         .friend-item:hover { background: #2d2d2d; }
         .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -21,95 +20,67 @@
     </style>
 </head>
 <body>
-
 <div class="sidebar">
     <div style="padding: 20px; background: #ffcc00; color: #000; font-weight: bold;">الأصدقاء</div>
     <div id="friends-list"></div>
+    <button onclick="logout()" style="margin: 10px; background: #ff4444; color: white;">تسجيل خروج</button>
 </div>
-
 <div class="chat-area">
-    <div id="chat-header" style="padding: 15px; background: #1e1e1e; border-bottom: 1px solid #333;">اختر صديقاً لبدء المحادثة</div>
+    <div id="chat-header" style="padding: 15px; background: #1e1e1e; border-bottom: 1px solid #333;">اختر صديقاً</div>
     <div class="messages" id="messages-container"></div>
     <div class="input-box">
-        <input type="text" id="msg-input" placeholder="اكتب رسالتك هنا...">
+        <input type="text" id="msg-input" placeholder="اكتب رسالتك...">
         <button onclick="sendMessage()">إرسال</button>
     </div>
 </div>
-
 <script>
-    const API = 'http://localhost:3000';
-    const socket = io(API);
+    const API = window.location.origin;
+    const socket = io();
     const currentUser = JSON.parse(localStorage.getItem('fo_user'));
     let selectedFriend = null;
 
-    // الحماية: إذا لم يسجل دخول يرجع للصفحة الرئيسية[cite: 3]
-    if (!currentUser) {
-        window.location.href = 'login.html';
-    }
+    if (!currentUser) window.location.href = 'login.html';
 
-    // دالة موحدة لطلبات السيرفر لضمان إرسال التوكن صح[cite: 1, 3]
-    async function apiRequest(endpoint, options = {}) {
+    async function apiRequest(endpoint) {
         const token = localStorage.getItem('fo_token');
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // تم التعديل ليتوافق مع السيرفر
-        };
-
-        const response = await fetch(`${API}${endpoint}`, { ...options, headers });
-        if (response.status === 401 || response.status === 403) {
-            window.location.href = 'login.html';
-            return;
-        }
-        return response.json();
+        const res = await fetch(`${API}${endpoint}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        return res.json();
     }
 
-    // ربط المستخدم بالسوكيت
     socket.emit('register_socket', currentUser.id);
 
-    // جلب الأصدقاء عند تحميل الصفحة[cite: 3]
     async function loadFriends() {
         const friends = await apiRequest('/friends');
         const list = document.getElementById('friends-list');
         list.innerHTML = '';
-        if (friends) {
-            friends.forEach(f => {
-                const div = document.createElement('div');
-                div.className = 'friend-item';
-                div.innerText = f.username;
-                div.onclick = () => openChat(f);
-                list.appendChild(div);
-            });
-        }
-    }
-
-    function openChat(friend) {
-        selectedFriend = friend;
-        document.getElementById('chat-header').innerText = `المحادثة مع: ${friend.username}`;
-        document.getElementById('messages-container').innerHTML = ''; // تنظيف الشاشة
+        friends?.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            div.innerText = f.username;
+            div.onclick = () => {
+                selectedFriend = f;
+                document.getElementById('chat-header').innerText = `المحادثة مع: ${f.username}`;
+                document.getElementById('messages-container').innerHTML = '';
+            };
+            list.appendChild(div);
+        });
     }
 
     function sendMessage() {
         const input = document.getElementById('msg-input');
         const msg = input.value.trim();
         if (!msg || !selectedFriend) return;
-
-        const data = {
-            sender_id: currentUser.id,
-            receiver_id: selectedFriend.id,
-            message: msg
-        };
-
+        const data = { sender_id: currentUser.id, receiver_id: selectedFriend.id, message: msg };
         socket.emit('send_message', data);
         appendMessage(msg, 'sent');
         input.value = '';
     }
 
     socket.on('receive_message', (data) => {
-        if (selectedFriend && data.sender_id === selectedFriend.id) {
-            appendMessage(data.message, 'received');
-        } else {
-            console.log("رسالة جديدة من مستخدم آخر");
-        }
+        if (selectedFriend && data.sender_id === selectedFriend.id) appendMessage(data.message, 'received');
     });
 
     function appendMessage(text, type) {
@@ -120,15 +91,9 @@
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
-    function logout() {
-    localStorage.clear();
-    window.location.href = 'login.html';
-}
 
+    function logout() { localStorage.clear(); window.location.href = 'login.html'; }
     loadFriends();
-
-   
 </script>
-
 </body>
 </html>
