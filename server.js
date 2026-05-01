@@ -54,7 +54,20 @@ db.connect(function(err) {
     console.log('Connected to Database ✅');
     initTables(); 
 });
-
+// إضافة مسار التسجيل في server.js
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        // تشفير كلمة السر قبل الحفظ[cite: 1]
+        const hashedPassword = await bcrypt.hash(password, 10);
+        db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
+            if (err) return res.status(400).json({ error: 'اسم المستخدم مسجل مسبقاً' });
+            res.json({ success: true });
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'خطأ في خادم التسجيل' });
+    }
+});
 // 2. مسارات الـ API[cite: 1]
 app.post('/login', (req, res) => {
     const { username, password } = req.body;

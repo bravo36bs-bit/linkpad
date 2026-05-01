@@ -68,7 +68,7 @@
 
     // جلب الأصدقاء عند تحميل الصفحة[cite: 3]
     async function loadFriends() {
-        const friends = await apiRequest('/friends');[cite: 1]
+        const friends = await apiRequest('/friends');
         const list = document.getElementById('friends-list');
         list.innerHTML = '';
         if (friends) {
@@ -99,7 +99,7 @@
             message: msg
         };
 
-        socket.emit('send_message', data);[cite: 1]
+        socket.emit('send_message', data);
         appendMessage(msg, 'sent');
         input.value = '';
     }
@@ -120,8 +120,14 @@
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
+    function logout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+}
 
     loadFriends();
+
+   
 </script>
 
 </body>
