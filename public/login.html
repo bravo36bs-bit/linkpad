@@ -8,7 +8,6 @@
         .card { background: #2d2d2d; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #3d3d3d; color: white; box-sizing: border-box; }
         button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #ffcc00; color: #1a1a1a; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #e6b800; }
         .toggle-link { color: #ffcc00; cursor: pointer; font-size: 14px; margin-top: 15px; display: block; text-decoration: underline; }
         .error { color: #ff4444; font-size: 13px; margin-top: 10px; min-height: 18px; }
         .success { color: #44ff44; font-size: 13px; margin-top: 10px; }
@@ -16,9 +15,7 @@
     </style>
 </head>
 <body>
-
     <div class="card">
-        <!-- قسم تسجيل الدخول -->
         <div id="login-section">
             <h2>تسجيل الدخول</h2>
             <input type="text" id="login-user" placeholder="اسم المستخدم">
@@ -26,8 +23,6 @@
             <button onclick="handleAuth('/login', 'login')">دخول</button>
             <span class="toggle-link" onclick="toggleAuth()">ليس لديك حساب؟ إنشاء حساب جديد</span>
         </div>
-
-        <!-- قسم إنشاء الحساب -->
         <div id="register-section" class="hidden">
             <h2>إنشاء حساب جديد</h2>
             <input type="text" id="reg-user" placeholder="اختر اسم مستخدم">
@@ -35,60 +30,39 @@
             <button onclick="handleAuth('/register', 'reg')">تسجيل الحساب</button>
             <span class="toggle-link" onclick="toggleAuth()">لديك حساب بالفعل؟ سجل دخولك</span>
         </div>
-
         <div id="msg" class="error"></div>
     </div>
-
     <script>
-        // الرابط الخاص بك على Render (تأكد من أنه الرابط الصحيح)
         const API = window.location.origin; 
-
         function toggleAuth() {
             document.getElementById('login-section').classList.toggle('hidden');
             document.getElementById('register-section').classList.toggle('hidden');
             document.getElementById('msg').innerText = '';
         }
-
         async function handleAuth(endpoint, prefix) {
             const user = document.getElementById(`${prefix}-user`).value;
             const pass = document.getElementById(`${prefix}-pass`).value;
             const msgDiv = document.getElementById('msg');
-
-            if(!user || !pass) {
-                msgDiv.className = 'error';
-                msgDiv.innerText = 'يرجى ملء كافة الحقول';
-                return;
-            }
-
+            if(!user || !pass) { msgDiv.innerText = 'يرجى ملء كافة الحقول'; return; }
             try {
                 const response = await fetch(`${API}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })
                 });
-
                 const data = await response.json();
-
                 if (response.ok) {
                     if (endpoint === '/login') {
-                        // تخزين التوكن والبيانات عند تسجيل الدخول
                         localStorage.setItem('fo_token', data.token);
                         localStorage.setItem('fo_user', JSON.stringify(data.user));
                         window.location.href = 'dashboard.html';
                     } else {
-                        // عند نجاح التسجيل
                         msgDiv.className = 'success';
                         msgDiv.innerText = 'تم إنشاء الحساب بنجاح! يمكنك الدخول الآن.';
                         setTimeout(toggleAuth, 2000);
                     }
-                } else {
-                    msgDiv.className = 'error';
-                    msgDiv.innerText = data.error || 'حدث خطأ ما';
-                }
-            } catch (err) {
-                msgDiv.className = 'error';
-                msgDiv.innerText = 'فشل الاتصال بالسيرفر';
-            }
+                } else { msgDiv.innerText = data.error; }
+            } catch (err) { msgDiv.innerText = 'فشل الاتصال بالسيرفر'; }
         }
     </script>
 </body>
